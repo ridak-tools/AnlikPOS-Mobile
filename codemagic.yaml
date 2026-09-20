@@ -1,4 +1,4 @@
-workflows:
+﻿workflows:
   ios-ipa:
     name: AnlikPOS iOS IPA Build
     max_build_duration: 60
@@ -7,18 +7,22 @@ workflows:
       xcode: latest
       cocoapods: default
     scripts:
-      - name: 1. Install Dependencies
+      - name: 1. Install Node Dependencies
         script: |
           npm install --legacy-peer-deps
+          npm install @capacitor/core @capacitor/ios @capacitor/cli --legacy-peer-deps
       - name: 2. Build Web App
         script: |
           npm run build
       - name: 3. Add and Sync Capacitor iOS
         script: |
-          rm -rf ios
-          npx cap add ios
+          npx cap add ios || true
           npx cap sync ios
-      - name: 4. Build iOS Xcode App
+      - name: 4. Install CocoaPods
+        script: |
+          cd ios/App
+          pod install
+      - name: 5. Build iOS Xcode App
         script: |
           cd ios/App
           xcodebuild -workspace App.xcworkspace \
@@ -30,7 +34,7 @@ workflows:
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGN_IDENTITY="" \
             PROVISIONING_PROFILE_SPECIFIER=""
-      - name: 5. Create IPA Package
+      - name: 6. Create IPA Package
         script: |
           mkdir -p Payload
           APP_PATH=$(find ios/App/build -name "*.app" -type d | head -n 1)
