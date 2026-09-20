@@ -1,0 +1,4582 @@
+﻿==================================================
+DOSYA: capacitor.config.json
+==================================================
+{
+  "appId": "com.anlikpos.mobile",
+  "appName": "AnlÄ±kPOS",
+  "webDir": "dist",
+  "server": {
+    "androidScheme": "https"
+  },
+  "plugins": {
+    "CapacitorHttp": {
+      "enabled": true
+    },
+    "StatusBar": {
+      "overlaysWebView": false,
+      "style": "DARK",
+      "backgroundColor": "#ffffff"
+    }
+  }
+}
+
+
+==================================================
+DOSYA: index.html
+==================================================
+<!doctype html>
+<html lang="tr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0" />
+    <title>AnlÄ±kPOS Mobil</title>
+    <meta name="apple-mobile-web-app-capable" content="yes"/>
+    <meta name="apple-mobile-web-app-title" content="AnlÄ±kPOS"/>
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+    <meta name="mobile-web-app-capable" content="yes"/>
+    <meta name="theme-color" content="#0b1a33"/>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
+/* Safe Area Utilities (Ã‡entik ve Alt Ã‡ubuk KorumasÄ±) */
+.pt-safe {
+  padding-top: calc(env(safe-area-inset-top, 0px) + 12px);
+}
+
+.pb-safe {
+  padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 12px);
+}
+
+.pb-safe-lg {
+  padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 24px);
+}
+
+/* Durum Ã§ubuÄŸunun (status bar) rengini arka planla eÅŸitlemek iÃ§in */
+body {
+  background-color: #f0f4f9;
+}
+
+
+
+==================================================
+DOSYA: kurulum.bat
+==================================================
+@echo off
+echo [1/3] Paketler yukleniyor...
+call npm install
+if errorlevel 1 goto hata
+echo [2/3] Android projesi olusturuluyor (birkac dakika surebilir)...
+call npm run android:setup
+if errorlevel 1 goto hata
+echo [3/3] Android Studio aciliyor...
+call npx cap open android
+goto son
+:hata
+echo.
+echo HATA olustu. Yukaridaki mesaji kontrol edin (Node.js kurulu mu? Internet var mi?)
+:son
+pause
+
+
+
+==================================================
+DOSYA: kurulum.sh
+==================================================
+#!/usr/bin/env bash
+set -e
+echo "[1/3] Paketler yukleniyor..."
+npm install
+echo "[2/3] Android projesi olusturuluyor (birkac dakika surebilir)..."
+npm run android:setup
+echo "[3/3] Android Studio aciliyor..."
+npx cap open android
+
+
+
+==================================================
+DOSYA: package.json
+==================================================
+{
+  "name": "anlikpos-mobile",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "android:setup": "npm install @capacitor/core @capacitor/android && npm install -D @capacitor/cli && npm run build && npx cap add android && npx cap sync android",
+    "android:sync": "npm run build && npx cap sync android",
+    "android:open": "npx cap open android"
+  },
+  "dependencies": {
+    "@capacitor/android": "^8.5.2",
+    "@capacitor/core": "^8.5.2",
+    "@capacitor/local-notifications": "^8.3.1",
+    "clsx": "^2.1.1",
+    "lucide-react": "^0.474.0",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "react-hot-toast": "^2.5.2",
+    "tailwind-merge": "^3.0.2",
+    "zustand": "^5.0.3"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^8.5.2",
+    "@tailwindcss/vite": "^4.1.4",
+    "@types/node": "^22.15.3",
+    "@types/react": "^19.1.2",
+    "@types/react-dom": "^19.1.2",
+    "@vitejs/plugin-react": "^4.4.1",
+    "tailwindcss": "^4.1.4",
+    "typescript": "^5.7.3",
+    "vite": "^6.3.3",
+    "vite-plugin-singlefile": "^2.2.0"
+  }
+}
+
+
+
+==================================================
+DOSYA: README-ANDROID.md
+==================================================
+# AnlÄ±kPOS Mobil â†’ APK (GitHub Actions ile)
+
+BilgisayarÄ±nda Android Studio kurmadan, GitHub kendi sunucusunda APK Ã¼retir.
+
+## 1. GitHub'a yÃ¼kle
+Yeni bir repo oluÅŸtur (boÅŸ), sonra proje klasÃ¶rÃ¼nde:
+```
+git init
+git add .
+git commit -m "ilk surum"
+git branch -M main
+git remote add origin https://github.com/KULLANICI/REPO.git
+git push -u origin main
+```
+> Web arayÃ¼zÃ¼nden "Upload files" ile yÃ¼klÃ¼yorsan `.github` klasÃ¶rÃ¼nÃ¼n yÃ¼klendiÄŸinden emin ol
+> (noktayla baÅŸlayan klasÃ¶rler bazen atlanÄ±r). Yoksa GitHub'da **Add file â†’ Create new file**
+> ile `.github/workflows/android-apk.yml` yolunu yazÄ±p dosyanÄ±n iÃ§eriÄŸini yapÄ±ÅŸtÄ±r.
+
+## 2. APK'yÄ± indir
+- Push yapÄ±nca **Actions** sekmesinde "Android APK" Ã§alÄ±ÅŸÄ±r (ilk seferde ~5-10 dk).
+- Bitince Ã§alÄ±ÅŸmaya tÄ±kla â†’ en altta **Artifacts â†’ AnlikPOS-debug-apk** â†’ indir, zip'ten `app-debug.apk` Ã§Ä±kar.
+- Elle baÅŸlatmak iÃ§in: Actions â†’ Android APK â†’ **Run workflow**.
+- Etiket atarsan (`git tag v1.0 && git push origin v1.0`) APK ayrÄ±ca **Releases** sayfasÄ±na
+  eklenir. Telefondan direkt indirmek iÃ§in en kolayÄ± budur.
+
+## 3. Telefona kur
+APK'yÄ± telefona at, aÃ§. "Bilinmeyen kaynaklardan yÃ¼kleme" izni isteyebilir, onay ver.
+Bu **debug** APK'dÄ±r, test iÃ§in uygundur. Play Store iÃ§in imzalÄ± release (AAB) gerekir,
+gerektiÄŸinde workflow'a keystore'lu release adÄ±mÄ± ekleyebiliriz.
+
+## Hata olursa
+Actions'ta kÄ±rmÄ±zÄ± Ã§alÄ±ÅŸmaya tÄ±kla, hata veren adÄ±mÄ±n logunu kopyalayÄ±p gÃ¶nder.
+
+---
+
+# Alternatif: Android Studio ile yerelde (isteÄŸe baÄŸlÄ±)
+
+## Gereksinimler
+- **Node.js 22 LTS** veya Ã¼stÃ¼ (https://nodejs.org). Kontrol: `node -v`
+- **Android Studio** (kendi JDK ve SDK'sÄ± ile gelir)
+- Ä°lk kurulumda internet (paketler ve Gradle baÄŸÄ±mlÄ±lÄ±klarÄ± iner)
+
+## Ä°lk kurulum (bir kez)
+- **Windows:** `kurulum.bat` dosyasÄ±na Ã§ift tÄ±kla
+- **macOS / Linux:** `bash kurulum.sh`
+
+Bu betik sÄ±rayla ÅŸunlarÄ± yapar: `npm install` â†’ Capacitor paketlerini kurar â†’
+web uygulamasÄ±nÄ± derler (`dist/`) â†’ `android/` klasÃ¶rÃ¼nÃ¼ oluÅŸturur â†’ Android Studio'yu aÃ§ar.
+
+Elle yapmak istersen:
+```
+npm install
+npm run android:setup
+npm run android:open
+```
+Android Studio ilk aÃ§Ä±lÄ±ÅŸta Gradle senkronizasyonu yapar (birkaÃ§ dakika sÃ¼rebilir).
+
+> `android:setup` sadece **bir kez** Ã§alÄ±ÅŸtÄ±rÄ±lÄ±r. `android/` klasÃ¶rÃ¼ varsa tekrar Ã§alÄ±ÅŸtÄ±rma.
+
+## Telefonda / emÃ¼latÃ¶rde Ã§alÄ±ÅŸtÄ±rma
+Android Studio'da Ã¼stten cihazÄ± seÃ§ (emÃ¼latÃ¶r veya USB ile baÄŸlÄ± telefon,
+telefonda "USB hata ayÄ±klama" aÃ§Ä±k olmalÄ±) ve â–¶ **Run**'a bas.
+
+## Kodu deÄŸiÅŸtirdikten sonra
+```
+npm run android:sync
+```
+Sonra Android Studio'da tekrar Run.
+
+## APK / Play Store
+Android Studio â†’ **Build > Generate Signed App Bundle / APK**.
+- Keystore dosyasÄ±nÄ± ve ÅŸifresini mutlaka yedekle, kaybedersen gÃ¼ncelleme yayÄ±nlayamazsÄ±n.
+- Uygulama kimliÄŸi (`appId`) `capacitor.config.json` iÃ§inde: `com.anlikpos.mobile`.
+  Play Store'a yÃ¼klendikten sonra deÄŸiÅŸtirilemez. Kendi paket adÄ±nÄ± kullanacaksan
+  **`android:setup` Ã§alÄ±ÅŸtÄ±rmadan Ã¶nce** deÄŸiÅŸtir.
+
+## AÄŸ notlarÄ±
+- `CapacitorHttp` aÃ§Ä±k: API istekleri native yapÄ±lÄ±r, sunucuda CORS ayarÄ± gerekmez.
+- TÃ¼nel (https) adresleri sorunsuz Ã§alÄ±ÅŸÄ±r. Cloudflare quick tunnel adresi her yeniden
+  baÅŸlatmada deÄŸiÅŸir, uygulamada giriÅŸ ekranÄ±ndan yenisini girmen gerekir.
+- Yerel aÄŸdaki `http://192.168...` adresi iÃ§in `android/app/src/main/AndroidManifest.xml`
+  iÃ§indeki `<application ...>` etiketine `android:usesCleartextTraffic="true"` ekle
+  (sadece yerel test iÃ§in Ã¶neririm).
+
+## Ä°lk Ã§alÄ±ÅŸtÄ±rmada kontrol edilecekler
+- Android 15+ cihazlarda Ã¼st durum Ã§ubuÄŸu baÅŸlÄ±ÄŸÄ±n Ã¼stÃ¼ne binebilir (safe-area).
+- Geri tuÅŸu, uygulamada sayfa yÃ¶nlendirmesi olmadÄ±ÄŸÄ± iÃ§in doÄŸrudan uygulamadan Ã§Ä±karÄ±r.
+Bunlar gÃ¶rÃ¼lÃ¼rse ekran gÃ¶rÃ¼ntÃ¼sÃ¼yle bildir, dÃ¼zeltiriz.
+
+
+
+==================================================
+DOSYA: tsconfig.json
+==================================================
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "useDefineForClassFields": true,
+    "lib": ["ES2020", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "skipLibCheck": true,
+    "types": ["node"],
+
+    /* Bundler mode */
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": true,
+    "jsx": "react-jsx",
+
+    /* Path mapping */
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["src/*"]
+    },
+
+    /* Linting */
+    "strict": true,
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
+    "noFallthroughCasesInSwitch": true
+  },
+  "include": ["src", "vite.config.ts"]
+}
+
+
+
+==================================================
+DOSYA: vite.config.ts
+==================================================
+import path from "path";
+import { fileURLToPath } from "url";
+import tailwindcss from "@tailwindcss/vite";
+import react from "@vitejs/plugin-react";
+import { defineConfig } from "vite";
+import { viteSingleFile } from "vite-plugin-singlefile";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// https://vite.dev/config/
+export default defineConfig({
+  plugins: [react(), tailwindcss(), viteSingleFile()],
+  resolve: {
+    alias: {
+      "@": path.resolve(__dirname, "src"),
+    },
+  },
+});
+
+
+
+==================================================
+DOSYA: src\App.tsx
+==================================================
+import { useCallback, useEffect, useState } from 'react';
+import { Toaster } from 'react-hot-toast';
+import { useStore } from './store/useStore';
+import { api } from './api/client';
+import { initOrderNotifications } from './utils/orderNotify';
+
+import Login from './components/Login';
+import Layout from './components/Layout';
+import Dashboard from './components/pages/Dashboard';
+import POS from './components/pages/POS';
+import Calls from './components/pages/Calls';
+import Customers from './components/pages/Customers';
+import Integrations from './components/pages/Integrations';
+import Reports from './components/pages/Reports';
+import { Products, Categories, Users, Printers, TablesDef, Menus } from './components/pages/SimplePages';
+
+export default function App() {
+  const { token, user, currentPage, setUser, logout } = useStore();
+  const [refreshKey, setRefreshKey] = useState(0);
+
+  // Bildirim ve ses sistemini uygulama ayaÄŸa kalktÄ±ÄŸÄ±nda baÅŸlat
+  useEffect(() => {
+    initOrderNotifications();
+  }, []);
+
+  // Auto-verify token on mount
+  const verifyToken = useCallback(async () => {
+    if (!token) return;
+    try {
+      const d = await api('/mobile/me');
+      if (d.ok) {
+        setUser(d.user);
+      } else {
+        logout();
+      }
+    } catch {
+      // Ignore â€“ might be offline
+    }
+  }, [token, setUser, logout]);
+
+  useEffect(() => {
+    if (token && !user) {
+      verifyToken();
+    }
+  }, [token, user, verifyToken]);
+
+  const handleRefresh = () => setRefreshKey((k) => k + 1);
+
+  const isLoggedIn = !!(token && user);
+
+  return (
+    <>
+      <Toaster
+        position="top-center"
+        toastOptions={{
+          style: {
+            borderRadius: '16px',
+            fontWeight: 600,
+            fontSize: '14px',
+          },
+          duration: 3000,
+        }}
+      />
+
+      {!isLoggedIn ? (
+        <Login />
+      ) : (
+        <Layout onRefresh={handleRefresh}>
+          <PageRenderer key={refreshKey} page={currentPage} />
+        </Layout>
+      )}
+    </>
+  );
+}
+
+function PageRenderer({ page }: { page: string }) {
+  switch (page) {
+    case 'dash': return <Dashboard />;
+    case 'pos': return <POS />;
+    case 'calls': return <Calls />;
+    case 'customers': return <Customers />;
+    case 'integrations': return <Integrations />;
+    case 'products': return <Products />;
+    case 'menus': return <Menus />;
+    case 'categories': return <Categories />;
+    case 'tablesDef': return <TablesDef />;
+    case 'users': return <Users />;
+    case 'printers': return <Printers />;
+    case 'reports': return <Reports />;
+    default: return <Dashboard />;
+  }
+}
+
+
+==================================================
+DOSYA: src\index.css
+==================================================
+@import "tailwindcss";
+
+* {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html, body, #root {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background-color: #f0f4f9;
+}
+
+/* Android 3-TuÅŸ ve Ã‡entik KorumasÄ± */
+:root {
+  --safe-top: max(env(safe-area-inset-top, 0px), 36px);
+  --safe-bottom: max(env(safe-area-inset-bottom, 0px), 32px);
+}
+
+.pt-safe {
+  padding-top: var(--safe-top) !important;
+}
+
+.pb-safe {
+  padding-bottom: var(--safe-bottom) !important;
+}
+
+.pb-safe-lg {
+  padding-bottom: calc(var(--safe-bottom) + 20px) !important;
+}
+
+.safe-top {
+  padding-top: var(--safe-top);
+}
+
+* {
+  -webkit-overflow-scrolling: touch;
+}
+
+::-webkit-scrollbar {
+  width: 0px;
+  background: transparent;
+}
+
+input, select, textarea {
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+button:active {
+  transform: scale(0.97);
+}
+
+.z-60 {
+  z-index: 60;
+}
+
+
+==================================================
+DOSYA: src\main.tsx
+==================================================
+import { StrictMode } from "react";
+import { createRoot } from "react-dom/client";
+import "./index.css";
+import App from "./App";
+
+createRoot(document.getElementById("root")!).render(
+  <StrictMode>
+    <App />
+  </StrictMode>
+);
+
+
+
+==================================================
+DOSYA: src\api\client.ts
+==================================================
+import { useStore } from '../store/useStore';
+
+export function getBaseUrl(): string {
+  return useStore.getState().baseUrl || '';
+}
+
+export async function api<T = any>(
+  path: string,
+  opts: { method?: string; body?: any } = {}
+): Promise<T> {
+  const { token, baseUrl } = useStore.getState();
+  const url = (baseUrl || '') + path;
+
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+  };
+
+  if (token) {
+    headers['X-Token'] = token;
+  }
+
+  const conf: RequestInit = {
+    method: opts.method || 'GET',
+    headers,
+  };
+
+  if (opts.body !== undefined) {
+    conf.body = JSON.stringify(opts.body);
+  }
+
+  const res = await fetch(url, conf);
+
+  // âœ… YENÄ°: JSON parse hatasÄ±nÄ± yakala
+  let data: any;
+  try {
+    data = await res.json();
+  } catch {
+    throw new Error(`Sunucu hatasÄ± (${res.status})`);
+  }
+
+  if (res.status === 401) {
+    useStore.getState().logout();
+    throw new Error('Oturum sÃ¼resi doldu');
+  }
+
+  return data as T;
+}
+
+export function money(v: number | string | null | undefined): string {
+  const n = Number(v) || 0;
+  return n.toFixed(2).replace('.', ',') + ' â‚º';
+}
+
+
+==================================================
+DOSYA: src\components\Layout.tsx
+==================================================
+import { useState, useEffect, useCallback, useRef } from 'react';
+import {
+  LayoutDashboard, ShoppingCart, Phone, Users, Link2,
+  Package, BookOpen, Tag, Table2, UserCog, Printer,
+  BarChart3, LogOut, RefreshCw, Bell, ChevronRight, Menu, Truck, Clock, X, Timer
+} from 'lucide-react';
+import { useStore } from '../store/useStore';
+import { api, money, getBaseUrl } from '../api/client';
+import { notifyNewOrders, markOrdersSeen, initOrderNotifications } from '../utils/orderNotify';
+import toast from 'react-hot-toast';
+
+export const NAV_ITEMS = [
+  { id: 'dash', label: 'Genel BakÄ±ÅŸ', icon: LayoutDashboard },
+  { id: 'pos', label: 'POS', icon: ShoppingCart },
+  { id: 'calls', label: 'Ã‡aÄŸrÄ±lar', icon: Phone },
+  { id: 'customers', label: 'MÃ¼ÅŸteriler', icon: Users },
+  { id: 'integrations', label: 'Entegrasyonlar', icon: Link2 },
+  { id: 'products', label: 'ÃœrÃ¼nler', icon: Package },
+  { id: 'menus', label: 'MenÃ¼ler', icon: BookOpen },
+  { id: 'categories', label: 'Kategoriler', icon: Tag },
+  { id: 'tablesDef', label: 'Masalar', icon: Table2 },
+  { id: 'users', label: 'KullanÄ±cÄ±lar', icon: UserCog },
+  { id: 'printers', label: 'YazÄ±cÄ±lar', icon: Printer },
+  { id: 'reports', label: 'Raporlar', icon: BarChart3 },
+];
+
+interface LayoutProps {
+  children: React.ReactNode;
+  onRefresh: () => void;
+}
+
+export default function Layout({ children, onRefresh }: LayoutProps) {
+  const { currentPage, setPage, user, logout } = useStore();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  
+  // Bildirim State'leri
+  const [showNotifModal, setShowNotifModal] = useState(false);
+  const [packageOrders, setPackageOrders] = useState<any[]>([]);
+  const [seenOrderIds, setSeenOrderIds] = useState<Set<number>>(new Set());
+  const bootstrappedRef = useRef(false);
+
+  // Entegrasyon State'leri
+  const [showIntegModal, setShowIntegModal] = useState(false);
+  const [platforms, setPlatforms] = useState<any[]>([]);
+  const [countdown, setCountdown] = useState(30);
+  const [pollInterval, setPollInterval] = useState(30);
+
+  const currentNav = NAV_ITEMS.find((n) => n.id === currentPage);
+
+  // --- PAKET & ENTEGRASYON SÄ°PARÄ°Å BÄ°LDÄ°RÄ°M MANTIÄI ---
+  const fetchPackageNotifications = useCallback(async () => {
+    try {
+      const [pkg, active] = await Promise.all([
+        api('/mobile/orders/package').catch(() => ({ orders: [] })),
+        api('/mobile/orders/active').catch(() => ({ orders: [] })),
+      ]);
+
+      const openPkg = (pkg.orders || []).filter((o: any) => o.status === 'OPEN');
+      setPackageOrders(openPkg);
+
+      // Bildirim listesi: Paket + AÃ§Ä±k Entegrasyon SipariÅŸleri
+      const map = new Map<number, any>();
+      openPkg.forEach((o: any) => map.set(Number(o.id), o));
+
+      (active.orders || []).forEach((o: any) => {
+        if (o.status !== 'OPEN') return;
+        const sn = `${o.source_name || ''} ${o.platform || ''}`.toLowerCase();
+        if (
+          o.sale_type === 'PACKAGE' ||
+          sn.includes('yemek') ||
+          sn.includes('getir') ||
+          sn.includes('trendyol') ||
+          sn.includes('migros')
+        ) {
+          map.set(Number(o.id), o);
+        }
+      });
+
+      const list = Array.from(map.values());
+
+      if (!bootstrappedRef.current) {
+        markOrdersSeen(list);
+        bootstrappedRef.current = true;
+      } else {
+        await notifyNewOrders(list);
+      }
+    } catch {}
+  }, []);
+
+  useEffect(() => {
+    initOrderNotifications();
+    fetchPackageNotifications();
+
+    const timer = setInterval(fetchPackageNotifications, 8000); // 8 sn poll
+    return () => clearInterval(timer);
+  }, [fetchPackageNotifications]);
+
+  const handleOpenNotifModal = () => {
+    setShowNotifModal(true);
+    setSeenOrderIds((prev) => {
+      const next = new Set(prev);
+      packageOrders.forEach((o) => next.add(o.id));
+      return next;
+    });
+  };
+
+  // --- ENTEGRASYON KISA YOL MANTIÄI ---
+  const loadIntegrations = async () => {
+    try {
+      const d = await api('/mobile/integrations');
+      setPlatforms(d.platforms || []);
+      const pi = parseInt(d.poll_interval || 30);
+      setPollInterval(pi);
+      setCountdown(pi);
+    } catch {}
+  };
+
+  useEffect(() => {
+    if (!showIntegModal) return;
+    const t = setInterval(() => {
+      setCountdown((c) => {
+        if (c <= 1) { loadIntegrations(); return pollInterval; }
+        return c - 1;
+      });
+    }, 1000);
+    return () => clearInterval(t);
+  }, [showIntegModal, pollInterval]);
+
+  const toggleIntegration = async (key: string, start: boolean) => {
+    const d = await api('/mobile/integrations/toggle', { method: 'POST', body: { platform: key, start } });
+    if (!d.ok) toast.error(d.error || 'Hata');
+    else if (d.warning) toast(d.warning, { icon: 'âš ï¸' });
+    loadIntegrations();
+  };
+
+  const toggleAllIntegrations = async (start: boolean) => {
+    const d = await api('/mobile/integrations/toggle-all', { method: 'POST', body: { start } });
+    if (!d.ok) toast.error(d.error || 'Hata');
+    else toast.success(start ? 'TÃ¼mÃ¼ baÅŸlatÄ±ldÄ±' : 'TÃ¼mÃ¼ durduruldu');
+    loadIntegrations();
+  };
+
+  const anyIntegOn = platforms.some((p) => p.is_open || p.is_active);
+
+  // --- DÄ°ÄER ---
+  const handleLogout = () => {
+    logout();
+    toast('Ã‡Ä±kÄ±ÅŸ yapÄ±ldÄ±', { icon: 'ğŸ‘‹' });
+  };
+
+  const navigate = (id: string) => {
+    setPage(id);
+    setSidebarOpen(false);
+  };
+
+  const userInitial = (user?.name || 'U').charAt(0).toUpperCase();
+  const userName = user?.name || 'KullanÄ±cÄ±';
+  const userRole = user?.role || '';
+  const unreadCount = packageOrders.filter((o) => !seenOrderIds.has(o.id)).length;
+
+  return (
+    <div className="flex h-screen bg-[#f0f4f9] overflow-hidden">
+      {/* Sidebar Overlay */}
+      {sidebarOpen && (
+        <div className="fixed inset-0 bg-black/50 z-40 lg:hidden" onClick={() => setSidebarOpen(false)} />
+      )}
+
+      {/* Sidebar */}
+      <aside className={`fixed lg:static inset-y-0 left-0 z-50 w-72 bg-[#0b1a33] flex flex-col transition-transform duration-300 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}>
+        
+        {/* Sidebar Header */}
+        <div className="px-6 pb-6 pt-safe border-b border-white/10">
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 rounded-2xl bg-[#0f2347] border border-white/10 flex items-center justify-center shadow-lg overflow-hidden flex-shrink-0">
+              <img
+                src="/payment-icons/logo.png"
+                alt="AnlÄ±kPOS Logo"
+                className="w-full h-full object-cover scale-[1.55]"
+                onError={(e) => {
+                  (e.target as HTMLElement).style.display = 'none';
+                }}
+              />
+            </div>
+            <div>
+              <div className="text-white font-black text-lg">AnlÄ±kPOS</div>
+              <div className="text-blue-300/60 text-xs">Mobil Panel</div>
+            </div>
+          </div>
+        </div>
+
+        {/* Nav */}
+        <nav className="flex-1 overflow-y-auto p-3 space-y-0.5">
+          {NAV_ITEMS.map((item) => {
+            const Icon = item.icon;
+            const active = currentPage === item.id;
+            return (
+              <button
+                key={item.id}
+                onClick={() => navigate(item.id)}
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl transition-all ${active ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/30' : 'text-blue-200/60 hover:bg-white/5 hover:text-white'}`}
+              >
+                <Icon size={18} />
+                <span className="font-semibold text-sm">{item.label}</span>
+                {active && <ChevronRight size={14} className="ml-auto opacity-60" />}
+              </button>
+            );
+          })}
+        </nav>
+
+        <div className="p-3 pb-safe border-t border-white/10 space-y-1">
+          <button onClick={onRefresh} className="w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-blue-200/60 hover:bg-white/5 hover:text-white transition-all">
+            <RefreshCw size={18} />
+            <span className="font-semibold text-sm">Yenile</span>
+          </button>
+          <button onClick={handleLogout} className="w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-red-400/70 hover:bg-red-500/10 hover:text-red-400 transition-all">
+            <LogOut size={18} />
+            <span className="font-semibold text-sm">Ã‡Ä±kÄ±ÅŸ Yap</span>
+          </button>
+        </div>
+      </aside>
+
+      {/* Main */}
+      <div className="flex-1 flex flex-col overflow-hidden min-w-0">
+        <header className="bg-white border-b border-slate-100 px-4 pb-3 pt-safe flex items-center justify-between gap-3 flex-shrink-0">
+          <div className="flex items-center gap-3 min-w-0">
+            <button onClick={() => setSidebarOpen(true)} className="lg:hidden w-9 h-9 rounded-xl bg-slate-100 flex items-center justify-center text-slate-600 hover:bg-slate-200 transition-colors flex-shrink-0">
+              <Menu size={18} />
+            </button>
+            <div className="min-w-0">
+              <h1 className="font-black text-[#0b1a33] text-base truncate">
+                {currentNav?.label || 'AnlÄ±kPOS'}
+              </h1>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 flex-shrink-0">
+            <button
+              onClick={() => { loadIntegrations(); setShowIntegModal(true); }}
+              className="w-9 h-9 rounded-xl bg-slate-100 flex items-center justify-center text-slate-600 hover:bg-slate-200 transition-colors"
+              title="Entegrasyonlar"
+            >
+              <Link2 size={16} />
+            </button>
+
+            <button
+              onClick={() => { fetchPackageNotifications(); onRefresh(); }}
+              className="w-9 h-9 rounded-xl bg-slate-100 flex items-center justify-center text-slate-600 hover:bg-slate-200 transition-colors"
+              title="Yenile"
+            >
+              <RefreshCw size={16} />
+            </button>
+
+            <button
+              onClick={handleOpenNotifModal}
+              className="relative w-9 h-9 rounded-xl bg-slate-100 flex items-center justify-center text-slate-600 hover:bg-slate-200 transition-colors"
+              title="Paket SipariÅŸ Bildirimleri"
+            >
+              <Bell size={16} />
+              {unreadCount > 0 && (
+                <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full text-white text-[10px] font-black flex items-center justify-center animate-pulse shadow-sm">
+                  {unreadCount}
+                </span>
+              )}
+            </button>
+
+            <button
+              onClick={() => toast(`Yetkili: ${userName}\nRol: ${userRole || 'KullanÄ±cÄ±'}`, { icon: 'ğŸ‘¤', duration: 2500, style: { background: '#0b1a33', color: '#fff' } })}
+              className="w-9 h-9 rounded-full bg-gradient-to-br from-blue-500 to-cyan-400 flex items-center justify-center text-white font-black text-sm shadow-md active:scale-95 transition-transform"
+            >
+              {userInitial}
+            </button>
+          </div>
+        </header>
+
+        {/* Content */}
+        <main className="flex-1 overflow-y-auto pb-safe">
+          {children}
+        </main>
+      </div>
+
+      {/* ENTEGRASYON KISA YOL MODALI */}
+      {showIntegModal && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-sm p-0 sm:p-4">
+          <div className="w-full sm:max-w-md bg-white rounded-t-3xl sm:rounded-3xl shadow-2xl flex flex-col overflow-hidden max-h-[90vh]">
+            <div className="p-5 flex-shrink-0">
+              <h2 className="font-black text-slate-800 text-xl mb-4">Entegrasyonlar</h2>
+              <div className="font-bold text-slate-800 text-sm mb-2 text-center">Entegrasyon Yenilenme SÃ¼resi</div>
+              <div className="bg-red-50 rounded-2xl p-4 flex items-center justify-between mb-6">
+                <div className="flex items-center gap-2 text-red-500">
+                  <Timer size={20} />
+                  <span className="text-2xl font-black">{countdown}</span>
+                  <span className="font-bold text-sm mt-1">sn</span>
+                </div>
+                <button onClick={loadIntegrations} className="w-8 h-8 bg-white rounded-lg flex items-center justify-center shadow-sm text-slate-600 active:scale-95">
+                  <RefreshCw size={16} />
+                </button>
+              </div>
+
+              <div className="flex items-center justify-between mb-3">
+                <span className="font-bold text-slate-800 text-sm">Entegrasyon DurumlarÄ±</span>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-slate-400">TÃ¼mÃ¼nÃ¼ DeÄŸiÅŸtir</span>
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" checked={anyIntegOn} onChange={(e) => toggleAllIntegrations(e.target.checked)} className="sr-only peer" />
+                    <div className="w-11 h-6 bg-slate-200 peer-checked:bg-emerald-500 rounded-full transition-colors relative">
+                      <div className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${anyIntegOn ? 'translate-x-5' : 'translate-x-0.5'}`} />
+                    </div>
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex-1 overflow-y-auto px-5 pb-2">
+              <div className="grid grid-cols-2 gap-3">
+                {platforms.map((p) => {
+                  const isOn = p.is_open || p.is_active;
+                  return (
+                    <div key={p.key} className="border border-slate-100 rounded-2xl p-4 flex flex-col items-center justify-center text-center shadow-sm relative bg-white">
+                      <div className="w-12 h-12 rounded-full border border-slate-100 flex items-center justify-center overflow-hidden mb-2 shadow-sm p-1.5 bg-white">
+                        <PlatformLogo platformKey={p.key} name={p.name} />
+                      </div>
+                      <div className="font-bold text-slate-800 text-sm leading-tight mb-1">{p.name}</div>
+                      <div className={`text-[10px] font-black uppercase mb-3 ${isOn ? 'text-emerald-500' : 'text-slate-400'}`}>
+                        â— {isOn ? 'Aktif' : 'Pasif'}
+                      </div>
+                      <label className="relative inline-flex items-center cursor-pointer mb-2">
+                        <input
+                          type="checkbox"
+                          checked={isOn}
+                          disabled={!p.is_configured}
+                          onChange={(e) => toggleIntegration(p.key, e.target.checked)}
+                          className="sr-only peer"
+                        />
+                        <div className={`w-11 h-6 rounded-full transition-colors relative ${p.is_configured ? 'peer-checked:bg-emerald-500 bg-slate-200' : 'bg-slate-100'}`}>
+                          <div className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${isOn ? 'translate-x-5' : 'translate-x-0.5'}`} />
+                        </div>
+                      </label>
+                      {!p.is_configured && (
+                        <div className="text-[9px] text-slate-400 mt-1">YapÄ±landÄ±rÄ±lmamÄ±ÅŸ</div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="p-5 pb-safe-lg space-y-2 bg-white flex-shrink-0 border-t border-slate-50">
+              <button
+                onClick={() => { setShowIntegModal(false); navigate('integrations'); }}
+                className="w-full py-3.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-sm transition-colors"
+              >
+                TÃ¼m Entegrasyon SayfasÄ±
+              </button>
+              <button
+                onClick={() => setShowIntegModal(false)}
+                className="w-full py-3.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-sm transition-colors"
+              >
+                VazgeÃ§
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* PAKET SÄ°PARÄ°Å BÄ°LDÄ°RÄ°M MODALI */}
+      {showNotifModal && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-sm p-0 sm:p-4">
+          <div className="w-full sm:max-w-md bg-white rounded-t-3xl sm:rounded-3xl shadow-2xl max-h-[85vh] flex flex-col overflow-hidden">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100 flex-shrink-0 bg-white">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center"><Truck size={18} /></div>
+                <div>
+                  <h2 className="font-black text-slate-800 text-base">Paket SipariÅŸ Bildirimleri</h2>
+                  <p className="text-xs text-slate-400 font-medium">Toplam {packageOrders.length} aktif paket var</p>
+                </div>
+              </div>
+              <button onClick={() => setShowNotifModal(false)} className="w-8 h-8 rounded-xl bg-slate-100 flex items-center justify-center text-slate-500 hover:bg-slate-200 transition-colors"><X size={16} /></button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-4 pb-safe-lg space-y-2.5">
+              {packageOrders.length === 0 ? (
+                <div className="text-center py-12 text-slate-400">
+                  <Bell size={40} className="mx-auto mb-2 opacity-30" />
+                  <div className="font-bold text-sm">Aktif Paket SipariÅŸi Yok</div>
+                </div>
+              ) : (
+                packageOrders.map((o) => {
+                  const onWay = ['ON_THE_WAY', 'ON_WAY', 'DELIVERY'].includes((o.delivery_status || '').toUpperCase());
+                  return (
+                    <div key={o.id} className="bg-slate-50 border border-slate-100 rounded-2xl p-3.5 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="font-black text-slate-800 text-sm">#{o.order_no} Â· {o.source_name || 'Paket Servis'}</span>
+                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${onWay ? 'bg-blue-100 text-blue-700' : 'bg-amber-100 text-amber-700'}`}>{onWay ? 'ğŸ”µ Yolda' : 'ğŸŸ¡ HazÄ±rlanÄ±yor'}</span>
+                      </div>
+                      <div className="text-xs text-slate-600 font-semibold space-y-0.5">
+                        {o.customer_name && <div>ğŸ‘¤ {o.customer_name}</div>}
+                        {o.customer_phone && <div className="text-blue-600">ğŸ“ {o.customer_phone}</div>}
+                        {o.address && <div className="text-slate-500 truncate">ğŸ“ {o.address}</div>}
+                      </div>
+                      <div className="flex items-center justify-between pt-1 border-t border-slate-200/60">
+                        <div className="font-black text-emerald-600 text-sm">{money(o.grand_total)}</div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs text-slate-400 font-medium flex items-center gap-1"><Clock size={12} /> {o.waiting_minutes || 0} dk</span>
+                          <button
+                            onClick={() => {
+                              setShowNotifModal(false);
+                              navigate('pos');
+                            }}
+                            className="px-3 py-1.5 bg-blue-600 text-white font-bold text-xs rounded-xl active:scale-95 transition-transform"
+                          >
+                            SipariÅŸe Git
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function PlatformLogo({ platformKey, name }: { platformKey: string; name: string }) {
+  const [attempt, setAttempt] = useState(0);
+  const base = getBaseUrl().replace(/\/$/, '');
+  const key = (platformKey || '').toLowerCase();
+  const cleanKey = key.replace(/[^a-z0-9]/g, '');
+
+  const candidates: string[] = [
+    `/platform-logos/${key}.png`,
+    `/platform-logos/${cleanKey}.png`,
+    `/platform-logos/${key}.jpg`,
+    `/platform-logos/${key}.svg`,
+    `/platform-logos/${key}.webp`,
+  ];
+
+  if (key.includes('yemek')) candidates.push('/platform-logos/yemeksepeti.png');
+  if (key.includes('getir')) candidates.push('/platform-logos/getir.png');
+  if (key.includes('trendyol')) candidates.push('/platform-logos/trendyol.png', '/platform-logos/trendyolgo.png');
+  if (key.includes('migros')) candidates.push('/platform-logos/migros.png', '/platform-logos/migrosyemek.png');
+
+  if (base) {
+    candidates.push(`${base}/mobile/platform-logo/${encodeURIComponent(platformKey)}`);
+    candidates.push(`${base}/mobile/platform-logo/${encodeURIComponent(key)}`);
+    candidates.push(`${base}/_internal/assets/images/platforms/${key}.png`);
+    candidates.push(`${base}/assets/images/platforms/${key}.png`);
+  }
+
+  const currentSrc = candidates[attempt];
+
+  if (!currentSrc || attempt >= candidates.length) {
+    const colors: Record<string, string> = {
+      yemeksepeti: 'bg-pink-500 text-white',
+      getir: 'bg-purple-600 text-amber-300',
+      trendyol: 'bg-orange-500 text-white',
+      migros: 'bg-orange-400 text-white',
+    };
+    const colorClass = Object.entries(colors).find(([k]) => key.includes(k))?.[1] || 'bg-slate-700 text-white';
+
+    return (
+      <div className={`w-full h-full rounded-full ${colorClass} flex items-center justify-center font-black text-base shadow-inner`}>
+        {(name || '?').charAt(0).toUpperCase()}
+      </div>
+    );
+  }
+
+  return (
+    <img
+      src={currentSrc}
+      alt={name}
+      className="w-full h-full object-contain rounded-full"
+      onError={() => setAttempt((prev) => prev + 1)}
+    />
+  );
+}
+
+
+==================================================
+DOSYA: src\components\Login.tsx
+==================================================
+import { useState, useEffect } from 'react';
+import { Eye, EyeOff, Wifi, Lock, User, Server } from 'lucide-react';
+import { api } from '../api/client';
+import { useStore } from '../store/useStore';
+import toast from 'react-hot-toast';
+
+const REMEMBER_KEY = 'anlikpos-login-remember';
+
+export default function Login() {
+  const [terminalUrl, setTerminalUrl] = useState('');
+  const [companyId, setCompanyId] = useState('');
+  const [password, setPassword] = useState('');
+  const [showPass, setShowPass] = useState(false);
+  const [rememberMe, setRememberMe] = useState(true);
+  const [loading, setLoading] = useState(false);
+
+  const { setToken, setUser, setBaseUrl } = useStore();
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(REMEMBER_KEY);
+      if (!raw) return;
+      const saved = JSON.parse(raw) as {
+        remember?: boolean;
+        terminalUrl?: string;
+        companyId?: string;
+      };
+      if (saved.remember) {
+        setRememberMe(true);
+        if (saved.terminalUrl) setTerminalUrl(saved.terminalUrl);
+        if (saved.companyId) setCompanyId(saved.companyId);
+      } else {
+        setRememberMe(false);
+      }
+    } catch {}
+  }, []);
+
+  const normalizeUrl = (url: string) => {
+    let u = url.trim();
+    if (!u) return '';
+    if (!u.startsWith('http://') && !u.startsWith('https://')) {
+      u = 'https://' + u;
+    }
+    return u.replace(/\/$/, '');
+  };
+
+  const saveRemember = (url: string, company: string, remember: boolean) => {
+    if (remember) {
+      localStorage.setItem(
+        REMEMBER_KEY,
+        JSON.stringify({
+          remember: true,
+          terminalUrl: url,
+          companyId: company,
+        })
+      );
+    } else {
+      localStorage.removeItem(REMEMBER_KEY);
+    }
+  };
+
+  const handleLogin = async () => {
+    if (!terminalUrl.trim()) {
+      toast.error('Tunnel adresi giriniz!');
+      return;
+    }
+    if (!companyId.trim() || !password.trim()) {
+      toast.error('Ä°ÅŸletme adÄ± ve ÅŸifre zorunludur!');
+      return;
+    }
+
+    setLoading(true);
+    const base = normalizeUrl(terminalUrl);
+
+    try {
+      setBaseUrl(base);
+      const data = await api('/mobile/auth', {
+        method: 'POST',
+        body: {
+          company_id: companyId,
+          password,
+          terminal_password: companyId,
+          user_pin: password,
+        },
+      });
+
+      if (!data.ok) {
+        toast.error(data.error || 'GiriÅŸ baÅŸarÄ±sÄ±z!');
+        return;
+      }
+
+      saveRemember(terminalUrl.trim(), companyId.trim(), rememberMe);
+
+      setToken(data.token);
+      setUser(data.user);
+      toast.success('HoÅŸ geldiniz ' + (data.user?.name || ''));
+    } catch (e: any) {
+      toast.error('BaÄŸlantÄ± hatasÄ±: ' + (e.message || 'Sunucuya ulaÅŸÄ±lamÄ±yor'));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-[#0b1a33] via-[#0f2347] to-[#081428] flex items-center justify-center p-4">
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-blue-500/5 rounded-full blur-3xl" />
+        <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-cyan-500/5 rounded-full blur-3xl" />
+      </div>
+
+      <div className="w-full max-w-sm relative z-10">
+        
+        {/* âœ… GiriÅŸ EkranÄ± Logo Kutusu - Ã‡erÃ§eveyi Birebir Dolduran GÃ¶rÃ¼nÃ¼m */}
+        <div className="text-center mb-8">
+          <div className="inline-flex items-center justify-center w-24 h-24 rounded-3xl bg-[#0b1a33] border border-white/20 mb-4 shadow-2xl overflow-hidden">
+            <img
+              src="/payment-icons/logo.png"
+              alt="AnlÄ±kPOS Logo"
+              className="w-full h-full object-cover scale-[1.55]"
+            />
+          </div>
+          <h1 className="text-3xl font-black text-white tracking-tight">AnlÄ±kPOS</h1>
+          <p className="text-blue-300/70 text-sm mt-1 font-medium">Restoran Pos Sistemi</p>
+        </div>
+
+        <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-6 shadow-2xl">
+          <div className="mb-4">
+            <label className="block text-xs font-bold text-blue-300/80 uppercase tracking-wider mb-2">
+              Tunnel / Sunucu Adresi
+            </label>
+            <div className="relative">
+              <Server size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-blue-400/60" />
+              <input
+                type="url"
+                value={terminalUrl}
+                onChange={(e) => setTerminalUrl(e.target.value)}
+                placeholder="Sunucu Adresini Girin"
+                className="w-full bg-white/5 border border-white/10 rounded-2xl pl-10 pr-4 py-3.5 text-white placeholder-white/20 focus:outline-none focus:border-blue-400/50 focus:ring-2 focus:ring-blue-400/20 text-sm transition-all"
+                onKeyDown={(e) => e.key === 'Enter' && handleLogin()}
+              />
+            </div>
+          </div>
+
+          <div className="mb-4">
+            <label className="block text-xs font-bold text-blue-300/80 uppercase tracking-wider mb-2">
+              Ä°ÅŸletme AdÄ± (KullanÄ±cÄ± ID)
+            </label>
+            <div className="relative">
+              <User size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-blue-400/60" />
+              <input
+                type="text"
+                value={companyId}
+                onChange={(e) => setCompanyId(e.target.value)}
+                placeholder="Ä°ÅŸletme adÄ±nÄ±z"
+                className="w-full bg-white/5 border border-white/10 rounded-2xl pl-10 pr-4 py-3.5 text-white placeholder-white/20 focus:outline-none focus:border-blue-400/50 focus:ring-2 focus:ring-blue-400/20 text-sm transition-all"
+                onKeyDown={(e) => e.key === 'Enter' && handleLogin()}
+              />
+            </div>
+          </div>
+
+          <div className="mb-4">
+            <label className="block text-xs font-bold text-blue-300/80 uppercase tracking-wider mb-2">
+              YÃ¶netici Åifresi
+            </label>
+            <div className="relative">
+              <Lock size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-blue-400/60" />
+              <input
+                type={showPass ? 'text' : 'password'}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢"
+                className="w-full bg-white/5 border border-white/10 rounded-2xl pl-10 pr-12 py-3.5 text-white placeholder-white/20 focus:outline-none focus:border-blue-400/50 focus:ring-2 focus:ring-blue-400/20 text-sm transition-all"
+                onKeyDown={(e) => e.key === 'Enter' && handleLogin()}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPass(!showPass)}
+                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-white/30 hover:text-white/60 transition-colors"
+              >
+                {showPass ? <EyeOff size={16} /> : <Eye size={16} />}
+              </button>
+            </div>
+          </div>
+
+          <label className="flex items-center gap-3 cursor-pointer mb-6 select-none">
+            <div
+              className={`w-11 h-6 rounded-full transition-colors relative flex-shrink-0 ${
+                rememberMe ? 'bg-emerald-500' : 'bg-white/20'
+              }`}
+              onClick={() => setRememberMe((v) => !v)}
+            >
+              <div
+                className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${
+                  rememberMe ? 'translate-x-5' : 'translate-x-0.5'
+                }`}
+              />
+            </div>
+            <div className="min-w-0">
+              <div className="text-sm font-bold text-white/90">Beni hatÄ±rla</div>
+              <div className="text-[11px] text-white/40 leading-tight">
+                Tunnel adresi ve iÅŸletme adÄ± kaydedilir (ÅŸifre kaydedilmez)
+              </div>
+            </div>
+            <input
+              type="checkbox"
+              checked={rememberMe}
+              onChange={(e) => setRememberMe(e.target.checked)}
+              className="hidden"
+            />
+          </label>
+
+          <button
+            onClick={handleLogin}
+            disabled={loading}
+            className="w-full py-4 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-cyan-500 text-white font-bold rounded-2xl shadow-lg shadow-blue-500/30 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+          >
+            {loading ? (
+              <>
+                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                BaÄŸlanÄ±lÄ±yor...
+              </>
+            ) : (
+              <>
+                <Wifi size={18} />
+                GiriÅŸ Yap
+              </>
+            )}
+          </button>
+        </div>
+
+        <p className="text-center text-white/20 text-xs mt-6">AnlÄ±kPOS Mobil v2.0</p>
+      </div>
+    </div>
+  );
+}
+
+
+==================================================
+DOSYA: src\components\pages\Calls.tsx
+==================================================
+import { useState, useEffect, useRef } from 'react';
+import { Phone, Search, UserPlus, ShoppingCart } from 'lucide-react';
+import { api } from '../../api/client';
+import { useStore } from '../../store/useStore';
+import toast from 'react-hot-toast';
+import Modal from '../ui/Modal';
+import PosOverlay from '../ui/PosOverlay';
+
+interface CallLog {
+  id: number;
+  phone: string;
+  customer_name: string;
+  address: string;
+  customer_id: number | null;
+  is_registered: boolean;
+  call_date: string;
+  call_time: string;
+}
+
+export default function Calls() {
+  const [logs, setLogs] = useState<CallLog[]>([]);
+  const [query, setQuery] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [newCustModal, setNewCustModal] = useState<{ phone: string } | null>(null);
+  const [newName, setNewName] = useState('');
+  const [newPhone, setNewPhone] = useState('');
+  const [newAddr, setNewAddr] = useState('');
+  const timer = useRef<any>(null);
+  const { openPackage, ovOpen, setOvOpen } = useStore();
+
+  const load = async (q: string) => {
+    setLoading(true);
+    try {
+      const d = await api('/mobile/call-logs?q=' + encodeURIComponent(q));
+      setLogs(d.logs || []);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => { load(''); }, []);
+
+  // Auto refresh every 5 seconds
+  useEffect(() => {
+    const t = setInterval(() => load(query), 5000);
+    return () => clearInterval(t);
+  }, [query]);
+
+  const handleInput = (v: string) => {
+    setQuery(v);
+    if (timer.current) clearTimeout(timer.current);
+    timer.current = setTimeout(() => load(v), 300);
+  };
+
+  const createAndOrder = async () => {
+    if (!newName.trim() || !newPhone.trim()) { toast.error('Ad ve telefon zorunlu'); return; }
+    const d = await api('/mobile/customers/create', {
+      method: 'POST',
+      body: { name: newName, phone: newPhone, address: newAddr },
+    });
+    if (d.ok) {
+      setNewCustModal(null);
+      openPackage({ id: d.customer.id, name: newName, phone: newPhone, address: newAddr });
+    } else {
+      toast.error(d.error || 'Hata');
+    }
+  };
+
+  return (
+    <div className="p-4 space-y-3 max-w-2xl mx-auto">
+      {/* Search */}
+      <div className="relative">
+        <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+        <input
+          type="search"
+          value={query}
+          onChange={(e) => handleInput(e.target.value)}
+          placeholder="Ä°sim, telefon veya adres ara..."
+          className="w-full bg-white border border-slate-200 rounded-2xl pl-10 pr-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+        />
+      </div>
+
+      <div className="flex items-center justify-between">
+        <div className="text-xs font-bold text-slate-500 uppercase tracking-wide flex items-center gap-2">
+          <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse inline-block" />
+          CanlÄ± Â· {logs.length} Ã§aÄŸrÄ±
+        </div>
+      </div>
+
+      {loading && logs.length === 0 ? (
+        <div className="space-y-3">
+          {[1,2,3].map(i => <div key={i} className="h-28 bg-slate-200 rounded-2xl animate-pulse" />)}
+        </div>
+      ) : logs.length === 0 ? (
+        <div className="text-center py-20 text-slate-400">
+          <Phone size={48} className="mx-auto mb-3 opacity-30" />
+          <div className="font-bold">Ã‡aÄŸrÄ± kaydÄ± bulunamadÄ±</div>
+        </div>
+      ) : (
+        <div className="space-y-2">
+          {logs.map((log) => (
+            <div key={log.id} className="bg-white border border-slate-100 rounded-2xl p-4 shadow-sm">
+              <div className="flex items-start justify-between gap-2 mb-2">
+                <div className="font-bold text-slate-600 text-xs flex items-center gap-1">
+                  <Phone size={12} />
+                  {log.call_time} Â· {log.call_date}
+                </div>
+                <span className={`text-xs font-bold px-2 py-0.5 rounded-lg ${log.is_registered ? 'bg-emerald-100 text-emerald-700' : 'bg-orange-100 text-orange-700'}`}>
+                  {log.is_registered ? 'ğŸŸ¢ KayÄ±tlÄ±' : 'ğŸŸ  KayÄ±tsÄ±z'}
+                </span>
+              </div>
+
+              <div className="font-black text-slate-800 text-base">
+                {log.is_registered ? log.customer_name : 'KayÄ±tlÄ± MÃ¼ÅŸteri Yok'}
+              </div>
+              <div className="text-blue-600 font-bold text-sm mt-0.5">â˜ {log.phone}</div>
+              {log.address && log.address !== '-' && (
+                <div className="text-slate-500 text-xs mt-1">ğŸ“ {log.address}</div>
+              )}
+
+              <div className="flex gap-2 mt-3 flex-wrap">
+                {log.is_registered && log.customer_id ? (
+                  <button
+                    onClick={() => openPackage({ id: log.customer_id!, name: log.customer_name })}
+                    className="flex items-center gap-1.5 px-3 py-2 bg-emerald-600 text-white text-xs font-bold rounded-xl"
+                  >
+                    <ShoppingCart size={13} /> SipariÅŸ AÃ§
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => { setNewPhone(log.phone); setNewName(''); setNewAddr(''); setNewCustModal({ phone: log.phone }); }}
+                    className="flex items-center gap-1.5 px-3 py-2 bg-blue-600 text-white text-xs font-bold rounded-xl"
+                  >
+                    <UserPlus size={13} /> Yeni MÃ¼ÅŸteri
+                  </button>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* New Customer Modal */}
+      {newCustModal && (
+        <Modal
+          title="+ Yeni MÃ¼ÅŸteri (Arama)"
+          onClose={() => setNewCustModal(null)}
+          onConfirm={createAndOrder}
+          confirmText="OluÅŸtur ve SipariÅŸ AÃ§"
+        >
+          <div>
+            <label className="block text-xs font-bold text-slate-500 mb-1">Ad Soyad *</label>
+            <input type="text" value={newName} onChange={(e) => setNewName(e.target.value)} className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm" />
+          </div>
+          <div>
+            <label className="block text-xs font-bold text-slate-500 mb-1">Telefon *</label>
+            <input type="tel" value={newPhone} onChange={(e) => setNewPhone(e.target.value)} className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm" />
+          </div>
+          <div>
+            <label className="block text-xs font-bold text-slate-500 mb-1">Adres</label>
+            <textarea value={newAddr} onChange={(e) => setNewAddr(e.target.value)} rows={2} className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm resize-none" />
+          </div>
+        </Modal>
+      )}
+
+      {ovOpen && <PosOverlay onClose={() => setOvOpen(false)} />}
+    </div>
+  );
+}
+
+
+
+==================================================
+DOSYA: src\components\pages\Customers.tsx
+==================================================
+import { useState, useEffect, useRef } from 'react';
+import { Search, UserPlus, ChevronRight } from 'lucide-react';
+import { api, money } from '../../api/client';
+import toast from 'react-hot-toast';
+import Modal from '../ui/Modal';
+
+interface Customer { id: number; name: string; phone: string; address: string; email: string; note: string; active: boolean; }
+interface Address { id: number; title: string; address: string; description: string; is_default: boolean; }
+interface Order { id: number; order_no: string; sale_type: string; status: string; created_at: string; grand_total: number; }
+
+export default function Customers() {
+  const [customers, setCustomers] = useState<Customer[]>([]);
+  const [query, setQuery] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [detail, setDetail] = useState<{ customer: Customer; addresses: Address[]; orders: Order[] } | null>(null);
+  const [showNewForm, setShowNewForm] = useState(false);
+  const [editMode, setEditMode] = useState(false);
+  const [form, setForm] = useState({ name: '', phone: '', address: '', email: '', note: '' });
+  const timer = useRef<any>(null);
+
+  const load = async (q: string) => {
+    setLoading(true);
+    try {
+      const d = await api('/mobile/customers?q=' + encodeURIComponent(q));
+      setCustomers(d.customers || []);
+    } finally { setLoading(false); }
+  };
+
+  useEffect(() => { load(''); }, []);
+
+  const handleInput = (v: string) => {
+    setQuery(v);
+    if (timer.current) clearTimeout(timer.current);
+    timer.current = setTimeout(() => load(v), 300);
+  };
+
+  const openDetail = async (c: Customer) => {
+    const [addrRes, ordRes] = await Promise.all([
+      api('/mobile/customer-addresses?customer_id=' + c.id),
+      api('/mobile/customer-orders?customer_id=' + c.id),
+    ]);
+    setDetail({ customer: c, addresses: addrRes.addresses || [], orders: ordRes.orders || [] });
+    setForm({ name: c.name, phone: c.phone, address: c.address, email: c.email || '', note: c.note || '' });
+    setEditMode(false);
+  };
+
+  const saveCustomer = async () => {
+    if (!detail) return;
+    const d = await api('/mobile/customers/update', {
+      method: 'POST',
+      body: { id: detail.customer.id, ...form },
+    });
+    if (d.ok) { toast.success('GÃ¼ncellendi'); setDetail(null); load(query); }
+    else toast.error(d.error || 'Hata');
+  };
+
+  const createCustomer = async () => {
+    if (!form.name.trim() || !form.phone.trim()) { toast.error('Ad ve telefon zorunlu'); return; }
+    const d = await api('/mobile/customers/create', { method: 'POST', body: form });
+    if (d.ok) { toast.success('MÃ¼ÅŸteri eklendi'); setShowNewForm(false); setForm({ name: '', phone: '', address: '', email: '', note: '' }); load(query); }
+    else toast.error(d.error || 'Hata');
+  };
+
+  const setDefaultAddr = async (addrId: number) => {
+    if (!detail) return;
+    await api('/mobile/customer-addresses/set-default', { method: 'POST', body: { id: addrId } });
+    openDetail(detail.customer);
+  };
+
+  return (
+    <div className="p-4 space-y-3 max-w-2xl mx-auto">
+      {/* Header */}
+      <div className="flex gap-2">
+        <div className="relative flex-1">
+          <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+          <input type="search" value={query} onChange={(e) => handleInput(e.target.value)} placeholder="Ad veya telefon ara..." className="w-full bg-white border border-slate-200 rounded-2xl pl-10 pr-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400" />
+        </div>
+        <button onClick={() => { setForm({ name: '', phone: '', address: '', email: '', note: '' }); setShowNewForm(true); }} className="px-4 py-3 bg-blue-600 text-white font-bold rounded-2xl text-sm flex items-center gap-1.5 whitespace-nowrap">
+          <UserPlus size={16} /> Yeni
+        </button>
+      </div>
+
+      {/* List */}
+      {loading && customers.length === 0 ? (
+        <div className="space-y-2">{[1,2,3,4].map(i => <div key={i} className="h-20 bg-slate-200 rounded-2xl animate-pulse" />)}</div>
+      ) : customers.map((c) => (
+        <button key={c.id} onClick={() => openDetail(c)} className="w-full bg-white border border-slate-100 rounded-2xl p-4 shadow-sm flex items-center gap-3 text-left hover:border-blue-200 transition-colors">
+          <div className="w-11 h-11 rounded-full bg-gradient-to-br from-blue-500 to-blue-400 flex items-center justify-center text-white font-black text-lg flex-shrink-0">
+            {(c.name || '?').charAt(0).toUpperCase()}
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="font-bold text-slate-800 truncate">{c.name || '-'} {!c.active && <span className="text-xs text-slate-400 font-normal">(Pasif)</span>}</div>
+            <div className="text-blue-600 font-semibold text-xs mt-0.5">ğŸ“± {c.phone || '-'}</div>
+            {c.address && <div className="text-slate-500 text-xs mt-0.5 truncate">ğŸ“ {c.address}</div>}
+          </div>
+          <ChevronRight size={16} className="text-slate-300 flex-shrink-0" />
+        </button>
+      ))}
+
+      {/* Detail Modal */}
+      {detail && (
+        <Modal
+          title={editMode ? 'âœï¸ DÃ¼zenle' : 'ğŸ‘¤ ' + detail.customer.name}
+          onClose={() => setDetail(null)}
+          onConfirm={editMode ? saveCustomer : undefined}
+          confirmText="Kaydet"
+        >
+          {!editMode ? (
+            <>
+              <div className="bg-slate-50 rounded-2xl p-4 space-y-1.5">
+                <div className="text-sm"><span className="text-slate-500">Ad:</span> <strong>{detail.customer.name}</strong></div>
+                <div className="text-sm"><span className="text-slate-500">Telefon:</span> <strong className="text-blue-600">{detail.customer.phone}</strong></div>
+                {detail.customer.address && <div className="text-sm"><span className="text-slate-500">Adres:</span> {detail.customer.address}</div>}
+                {detail.customer.note && <div className="text-sm"><span className="text-slate-500">Not:</span> {detail.customer.note}</div>}
+              </div>
+              <button onClick={() => setEditMode(true)} className="w-full py-3 bg-blue-50 text-blue-600 font-bold rounded-2xl text-sm">âœï¸ Bilgileri DÃ¼zenle</button>
+
+              {/* Addresses */}
+              {detail.addresses.length > 0 && (
+                <div>
+                  <div className="font-bold text-slate-700 text-sm mb-2">ğŸ  KayÄ±tlÄ± Adresler</div>
+                  {detail.addresses.map((a) => (
+                    <div key={a.id} className={`rounded-xl p-3 mb-2 border ${a.is_default ? 'border-emerald-300 bg-emerald-50' : 'border-slate-200 bg-white'}`}>
+                      <div className="flex items-center gap-2 font-bold text-sm">
+                        ğŸ“ {a.title}
+                        {a.is_default && <span className="text-xs bg-emerald-500 text-white px-1.5 py-0.5 rounded-lg">VarsayÄ±lan</span>}
+                      </div>
+                      <div className="text-xs text-slate-600 mt-1">{a.address}</div>
+                      {!a.is_default && (
+                        <button onClick={() => setDefaultAddr(a.id)} className="text-xs text-blue-600 font-bold mt-1.5">â­ VarsayÄ±lan Yap</button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Orders */}
+              {detail.orders.length > 0 && (
+                <div>
+                  <div className="font-bold text-slate-700 text-sm mb-2">ğŸ“œ Son SipariÅŸler ({detail.orders.length})</div>
+                  {detail.orders.slice(0, 5).map((o) => (
+                    <div key={o.id} className="flex items-center justify-between py-2.5 border-b border-slate-100">
+                      <div>
+                        <div className="font-bold text-sm">#{o.order_no}</div>
+                        <div className="text-xs text-slate-500">{o.created_at} Â· {o.sale_type}</div>
+                      </div>
+                      <div className={`font-black text-sm ${o.status === 'CLOSED' ? 'text-emerald-600' : o.status === 'CANCELLED' ? 'text-red-600' : 'text-orange-500'}`}>
+                        {money(o.grand_total)}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </>
+          ) : (
+            <>
+              {(['name', 'phone', 'address', 'email', 'note'] as const).map((field) => (
+                <div key={field}>
+                  <label className="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-1.5">
+                    {field === 'name' ? 'Ad Soyad' : field === 'phone' ? 'Telefon' : field === 'address' ? 'Adres' : field === 'email' ? 'E-posta' : 'Not'}
+                    {(field === 'name' || field === 'phone') && ' *'}
+                  </label>
+                  {field === 'address' || field === 'note' ? (
+                    <textarea value={form[field]} onChange={(e) => setForm({ ...form, [field]: e.target.value })} rows={2} className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-blue-400" />
+                  ) : (
+                    <input type={field === 'email' ? 'email' : field === 'phone' ? 'tel' : 'text'} value={form[field]} onChange={(e) => setForm({ ...form, [field]: e.target.value })} className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400" />
+                  )}
+                </div>
+              ))}
+            </>
+          )}
+        </Modal>
+      )}
+
+      {/* New Customer Modal */}
+      {showNewForm && (
+        <Modal title="+ Yeni MÃ¼ÅŸteri" onClose={() => setShowNewForm(false)} onConfirm={createCustomer} confirmText="Ekle">
+          {(['name', 'phone', 'address', 'email', 'note'] as const).map((field) => (
+            <div key={field}>
+              <label className="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-1.5">
+                {field === 'name' ? 'Ad Soyad *' : field === 'phone' ? 'Telefon *' : field === 'address' ? 'Adres' : field === 'email' ? 'E-posta' : 'Not'}
+              </label>
+              {field === 'address' || field === 'note' ? (
+                <textarea value={form[field]} onChange={(e) => setForm({ ...form, [field]: e.target.value })} rows={2} className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-blue-400" />
+              ) : (
+                <input type={field === 'email' ? 'email' : field === 'phone' ? 'tel' : 'text'} value={form[field]} onChange={(e) => setForm({ ...form, [field]: e.target.value })} className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400" />
+              )}
+            </div>
+          ))}
+        </Modal>
+      )}
+    </div>
+  );
+}
+
+
+
+==================================================
+DOSYA: src\components\pages\Dashboard.tsx
+==================================================
+import { useEffect, useState } from 'react';
+import { TrendingUp, ShoppingBag, Users, Truck, Star, Clock } from 'lucide-react';
+import { api, money } from '../../api/client';
+import toast from 'react-hot-toast';
+
+interface DashData {
+  sales: number;
+  orders: number;
+  open_tables: number;
+  active_couriers: number;
+  top_product: string;
+  live: {
+    open_tables: number;
+    open_orders: number;
+    package_orders: number;
+    active_couriers: number;
+    last_order_time: string;
+  };
+  performance: {
+    open_tables: number;
+    package_orders: number;
+    active_couriers: number;
+    open_orders: number;
+    sales: number;
+    orders: number;
+  };
+  hourly: { hour: number; amount: number }[];
+}
+
+export default function Dashboard() {
+  const [data, setData] = useState<DashData | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  const load = async () => {
+    try {
+      const d = await api('/mobile/dashboard');
+      if (d.ok) setData(d);
+    } catch {
+      toast.error('Dashboard yÃ¼klenemedi');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => { load(); }, []);
+
+  if (loading) return <LoadingSkeleton />;
+
+  const hourly = data?.hourly || [];
+  const maxH = Math.max(...hourly.map((h) => h.amount), 1);
+
+  const statCards = [
+    { label: 'GÃ¼nlÃ¼k Ciro', value: money(data?.sales), icon: TrendingUp, color: 'from-emerald-500 to-green-400', bg: 'from-emerald-500/10 to-green-400/10' },
+    { label: 'AÃ§Ä±k Masa', value: String(data?.open_tables || 0), icon: ShoppingBag, color: 'from-orange-500 to-amber-400', bg: 'from-orange-500/10 to-amber-400/10' },
+    { label: 'BugÃ¼nkÃ¼ SipariÅŸ', value: String(data?.orders || 0), icon: Users, color: 'from-blue-500 to-indigo-400', bg: 'from-blue-500/10 to-indigo-400/10' },
+    { label: 'Aktif Kurye', value: String(data?.active_couriers || 0), icon: Truck, color: 'from-violet-500 to-purple-400', bg: 'from-violet-500/10 to-purple-400/10' },
+  ];
+
+  return (
+    <div className="p-4 space-y-4 max-w-4xl mx-auto">
+      {/* Stat Cards */}
+      <div className="grid grid-cols-2 gap-3">
+        {statCards.map((s) => {
+          const Icon = s.icon;
+          return (
+            <div key={s.label} className={`bg-gradient-to-br ${s.bg} border border-white rounded-2xl p-4`}>
+              <div className={`inline-flex p-2 rounded-xl bg-gradient-to-br ${s.color} mb-3`}>
+                <Icon size={18} className="text-white" />
+              </div>
+              <div className="text-2xl font-black text-slate-800">{s.value}</div>
+              <div className="text-xs font-bold text-slate-500 uppercase tracking-wide mt-1">{s.label}</div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Hourly Chart */}
+      <div className="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm">
+        <div className="flex items-center gap-2 mb-4">
+          <TrendingUp size={16} className="text-blue-500" />
+          <h3 className="font-bold text-slate-800">BugÃ¼nkÃ¼ SatÄ±ÅŸ Trendi</h3>
+        </div>
+        <div className="flex items-end gap-1 h-28">
+          {Array.from({ length: 24 }, (_, h) => {
+            const amt = hourly.find((x) => x.hour === h)?.amount || 0;
+            const pct = Math.max(2, (amt / maxH) * 100);
+            const now = new Date().getHours();
+            return (
+              <div
+                key={h}
+                className="flex-1 rounded-t-sm transition-all"
+                style={{
+                  height: `${pct}%`,
+                  background: h === now
+                    ? 'linear-gradient(to top, #3b82f6, #60a5fa)'
+                    : 'linear-gradient(to top, #e2e8f0, #f1f5f9)',
+                }}
+                title={`${h}:00 - ${money(amt)}`}
+              />
+            );
+          })}
+        </div>
+        <div className="flex justify-between text-xs text-slate-400 mt-2">
+          <span>00:00</span>
+          <span>06:00</span>
+          <span>12:00</span>
+          <span>18:00</span>
+          <span>23:00</span>
+        </div>
+      </div>
+
+      {/* Live Status */}
+      <div className="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm">
+        <div className="flex items-center gap-2 mb-3">
+          <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
+          <h3 className="font-bold text-slate-800">CanlÄ± Durum</h3>
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          {[
+            { label: 'AÃ§Ä±k Masa', value: data?.live?.open_tables, color: 'text-orange-600' },
+	    { label: 'AÃ§Ä±k Adisyon', value: data?.live?.open_orders, color: 'text-blue-600' },
+            { label: 'HazÄ±rlanan Paket', value: data?.live?.package_orders, color: 'text-purple-600' },
+            { label: 'Aktif Kurye', value: data?.live?.active_couriers, color: 'text-emerald-600' },
+          ].map((item) => (
+            <div key={item.label} className="bg-slate-50 rounded-xl p-3">
+              <div className={`text-2xl font-black ${item.color}`}>{item.value ?? 0}</div>
+              <div className="text-xs text-slate-500 font-medium mt-0.5">{item.label}</div>
+            </div>
+          ))}
+        </div>
+        {data?.live?.last_order_time && (
+          <div className="flex items-center gap-2 mt-3 text-sm text-slate-500">
+            <Clock size={14} />
+            <span>Son SipariÅŸ: <strong className="text-slate-700">{data.live.last_order_time}</strong></span>
+          </div>
+        )}
+      </div>
+
+      {/* Top Product */}
+      {data?.top_product && data.top_product !== '-' && (
+        <div className="bg-gradient-to-r from-amber-50 to-yellow-50 border border-amber-100 rounded-2xl p-4 flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center">
+            <Star size={20} className="text-amber-500 fill-amber-500" />
+          </div>
+          <div>
+            <div className="text-xs font-bold text-amber-600 uppercase tracking-wide">En Ã‡ok Satan</div>
+            <div className="font-bold text-slate-800">{data.top_product}</div>
+          </div>
+        </div>
+      )}
+
+      {/* Performance Grid */}
+      <div className="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm">
+        <h3 className="font-bold text-slate-800 mb-3">Ä°ÅŸletme PerformansÄ±</h3>
+        <div className="grid grid-cols-2 gap-2">
+          {[
+            { label: 'AÃ§Ä±k Masalar', value: data?.performance?.open_tables },
+	    { label: 'HazÄ±rlanan Paket', value: data?.performance?.package_orders },
+            { label: 'Aktif Kurye', value: data?.performance?.active_couriers },
+            { label: 'AÃ§Ä±k Adisyon', value: data?.performance?.open_orders },
+            { label: 'BugÃ¼nkÃ¼ Ciro', value: money(data?.performance?.sales) },
+            { label: 'BugÃ¼nkÃ¼ SipariÅŸ', value: data?.performance?.orders },
+          ].map((item) => (
+            <div key={item.label} className="bg-slate-50 rounded-xl p-3 text-center">
+              <div className="text-lg font-black text-blue-600">{item.value ?? 0}</div>
+              <div className="text-xs text-slate-500 font-medium mt-0.5 leading-tight">{item.label}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function LoadingSkeleton() {
+  return (
+    <div className="p-4 space-y-4 animate-pulse">
+      <div className="grid grid-cols-2 gap-3">
+        {[1,2,3,4].map(i => <div key={i} className="h-28 bg-slate-200 rounded-2xl" />)}
+      </div>
+      <div className="h-48 bg-slate-200 rounded-2xl" />
+      <div className="h-48 bg-slate-200 rounded-2xl" />
+    </div>
+  );
+}
+
+
+
+==================================================
+DOSYA: src\components\pages\Integrations.tsx
+==================================================
+import { useState, useEffect } from 'react';
+import { Settings, FileText, Zap, RefreshCw } from 'lucide-react';
+import { api, getBaseUrl } from '../../api/client';
+import toast from 'react-hot-toast';
+import Modal from '../ui/Modal';
+
+interface Platform {
+  key: string;
+  name: string;
+  icon: string;
+  is_configured: boolean;
+  is_active: boolean;
+  is_running: boolean;
+  is_open: boolean;
+}
+
+const PLATFORM_COLORS: Record<string, string> = {
+  yemeksepeti: '#FF6B00',
+  getir: '#5D3EBC',
+  trendyol: '#F27A1A',
+  migros: '#FFC800',
+};
+
+export default function Integrations() {
+  const [platforms, setPlatforms] = useState<Platform[]>([]);
+  const [countdown, setCountdown] = useState(30);
+  const [pollInterval, setPollInterval] = useState(30);
+  const [settingsModal, setSettingsModal] = useState<{ key: string; settings: any } | null>(null);
+  const [logsModal, setLogsModal] = useState<{ key: string; logs: any[] } | null>(null);
+
+  const load = async () => {
+    try {
+      const d = await api('/mobile/integrations');
+      setPlatforms(d.platforms || []);
+      const pi = parseInt(d.poll_interval || 30);
+      setPollInterval(pi);
+      setCountdown(pi);
+    } catch {}
+  };
+
+  useEffect(() => {
+    load();
+  }, []);
+
+  useEffect(() => {
+    const t = setInterval(() => {
+      setCountdown((c) => {
+        if (c <= 1) { load(); return pollInterval; }
+        return c - 1;
+      });
+    }, 1000);
+    return () => clearInterval(t);
+  }, [pollInterval]);
+
+  const toggle = async (key: string, start: boolean) => {
+    const d = await api('/mobile/integrations/toggle', { method: 'POST', body: { platform: key, start } });
+    if (!d.ok) toast.error(d.error || 'Hata');
+    else if (d.warning) toast(d.warning, { icon: 'âš ï¸' });
+    load();
+  };
+
+  const toggleAll = async (start: boolean) => {
+    const d = await api('/mobile/integrations/toggle-all', { method: 'POST', body: { start } });
+    if (!d.ok) toast.error(d.error || 'Hata');
+    else toast.success(start ? 'TÃ¼mÃ¼ baÅŸlatÄ±ldÄ±' : 'TÃ¼mÃ¼ durduruldu');
+    load();
+  };
+
+  const openSettings = async (key: string) => {
+    const d = await api('/mobile/integrations/settings?platform=' + encodeURIComponent(key));
+    if (d.ok) setSettingsModal({ key, settings: d.settings });
+    else toast.error(d.error || 'Ayarlar alÄ±namadÄ±');
+  };
+
+  const saveSettings = async (key: string, body: any) => {
+    const d = await api('/mobile/integrations/settings', { method: 'POST', body: { platform: key, ...body } });
+    if (d.ok) { toast.success('Kaydedildi'); setSettingsModal(null); load(); }
+    else toast.error(d.error || 'Kaydedilemedi');
+  };
+
+  const openLogs = async (key: string) => {
+    const d = await api('/mobile/integrations/logs?platform=' + key);
+    setLogsModal({ key, logs: d.logs || [] });
+  };
+
+  const testIntegration = async (key: string) => {
+    const d = await api('/mobile/integrations/test', { method: 'POST', body: { platform: key } });
+    if (d.ok) toast.success(d.success ? 'âœ… BaÄŸlantÄ± baÅŸarÄ±lÄ±' : 'âŒ BaÄŸlantÄ± kurulamadÄ±');
+    else toast.error(d.error || 'Test baÅŸarÄ±sÄ±z');
+  };
+
+  const anyOn = platforms.some((p) => p.is_open || p.is_active);
+
+  return (
+    <div className="p-4 space-y-4 max-w-2xl mx-auto">
+      {/* Timer */}
+      <div className="bg-white border border-slate-100 rounded-2xl p-4 flex items-center justify-between shadow-sm">
+        <div className="flex items-center gap-3">
+          <div className="w-12 h-12 rounded-2xl bg-red-50 flex items-center justify-center">
+            <span className="text-2xl font-black text-red-500">{countdown}</span>
+          </div>
+          <div>
+            <div className="font-bold text-slate-800 text-sm">Yenilenme SÃ¼resi</div>
+            <div className="text-xs text-slate-500">saniye sonra gÃ¼ncellenir</div>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <button onClick={load} className="w-9 h-9 bg-slate-100 rounded-xl flex items-center justify-center active:scale-95 transition-transform">
+            <RefreshCw size={16} className="text-slate-600" />
+          </button>
+        </div>
+      </div>
+
+      {/* Toggle All */}
+      <div className="bg-white border border-slate-100 rounded-2xl p-4 flex items-center justify-between shadow-sm">
+        <div>
+          <div className="font-bold text-slate-800">TÃ¼mÃ¼nÃ¼ DeÄŸiÅŸtir</div>
+          <div className="text-xs text-slate-500 mt-0.5">{anyOn ? 'BazÄ± platformlar aÃ§Ä±k' : 'TÃ¼mÃ¼ kapalÄ±'}</div>
+        </div>
+        <label className="relative inline-flex items-center cursor-pointer">
+          <input
+            type="checkbox"
+            checked={anyOn}
+            onChange={(e) => toggleAll(e.target.checked)}
+            className="sr-only peer"
+          />
+          <div className="w-12 h-6 bg-slate-200 peer-checked:bg-emerald-500 rounded-full transition-colors relative">
+            <div className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${anyOn ? 'translate-x-6' : 'translate-x-0.5'}`} />
+          </div>
+        </label>
+      </div>
+
+      {/* Platform Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        {platforms.map((p) => {
+          const col = PLATFORM_COLORS[p.key] || '#3B82F6';
+          const isOn = p.is_open || p.is_active;
+          return (
+            <div key={p.key} className="bg-white border-2 rounded-2xl p-4 shadow-sm" style={{ borderColor: col + '33' }}>
+              {/* Header */}
+              <div className="flex items-center gap-3 mb-3">
+                {/* âœ… AKILLI YEREL / SUNUCU LOGO YÃœKLEYÄ°CÄ° */}
+                <div className="w-12 h-12 rounded-2xl bg-white border border-slate-100 flex items-center justify-center overflow-hidden p-1 shadow-sm flex-shrink-0">
+                  <PlatformLogo platformKey={p.key} name={p.name} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="font-black text-slate-800" style={{ color: col }}>{p.name}</div>
+                  <div className={`text-xs font-bold mt-0.5 ${isOn ? 'text-emerald-600' : 'text-red-500'}`}>
+                    â— {isOn ? 'Aktif' : 'Pasif'}
+                  </div>
+                </div>
+                <label className="relative inline-flex items-center cursor-pointer flex-shrink-0">
+                  <input
+                    type="checkbox"
+                    checked={isOn}
+                    disabled={!p.is_configured}
+                    onChange={(e) => toggle(p.key, e.target.checked)}
+                    className="sr-only peer"
+                  />
+                  <div className={`w-11 h-6 rounded-full transition-colors relative ${p.is_configured ? 'peer-checked:bg-emerald-500 bg-slate-200 cursor-pointer' : 'bg-slate-100'}`}>
+                    <div className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${isOn ? 'translate-x-5' : 'translate-x-0.5'}`} />
+                  </div>
+                </label>
+              </div>
+
+              <div className="text-xs text-slate-500 mb-3">
+                {p.is_configured ? 'âœ… YapÄ±landÄ±rÄ±ldÄ±' : 'âš ï¸ YapÄ±landÄ±rÄ±lmamÄ±ÅŸ'}
+              </div>
+
+              {/* Actions */}
+              <div className="flex gap-1.5 flex-wrap">
+                <button onClick={() => openSettings(p.key)} className="flex items-center gap-1 px-2.5 py-1.5 bg-blue-50 text-blue-600 text-xs font-bold rounded-xl active:scale-95 transition-transform">
+                  <Settings size={12} /> Ayarlar
+                </button>
+                <button onClick={() => openLogs(p.key)} className="flex items-center gap-1 px-2.5 py-1.5 bg-slate-100 text-slate-600 text-xs font-bold rounded-xl active:scale-95 transition-transform">
+                  <FileText size={12} /> Loglar
+                </button>
+                {p.is_configured && (
+                  <button onClick={() => testIntegration(p.key)} className="flex items-center gap-1 px-2.5 py-1.5 bg-amber-50 text-amber-600 text-xs font-bold rounded-xl active:scale-95 transition-transform">
+                    <Zap size={12} /> Test
+                  </button>
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Settings Modal */}
+      {settingsModal && (
+        <SettingsModal
+          settings={settingsModal.settings}
+          onSave={(body) => saveSettings(settingsModal.key, body)}
+          onClose={() => setSettingsModal(null)}
+        />
+      )}
+
+      {/* Logs Modal */}
+      {logsModal && (
+        <Modal title={logsModal.key.toUpperCase() + ' LoglarÄ±'} onClose={() => setLogsModal(null)}>
+          <div className="space-y-2 max-h-80 overflow-y-auto">
+            {logsModal.logs.length === 0 ? (
+              <div className="text-center text-slate-400 py-6">Log bulunamadÄ±</div>
+            ) : logsModal.logs.map((l, i) => (
+              <div key={i} className="bg-slate-50 rounded-xl p-3">
+                <div className="text-xs text-slate-400">{l.created_at}</div>
+                <div className="font-bold text-sm mt-0.5">[{l.level}] {l.title}</div>
+                <div className="text-xs text-slate-600 mt-0.5">{l.message}</div>
+              </div>
+            ))}
+          </div>
+        </Modal>
+      )}
+    </div>
+  );
+}
+
+function SettingsModal({ settings, onSave, onClose }: { settings: any; onSave: (b: any) => void; onClose: () => void }) {
+  const [values, setValues] = useState<Record<string, any>>(() => {
+    const init: Record<string, any> = {};
+    (settings.fields || []).forEach((f: any) => { init[f.key] = f.value || ''; });
+    init.poll_interval = settings.poll_interval || 30;
+    init.is_active = settings.is_active || false;
+    init.auto_confirm = settings.auto_confirm || false;
+    init.auto_print = settings.auto_print || false;
+    return init;
+  });
+
+  const handleSave = () => {
+    const body: Record<string, any> = {};
+    (settings.fields || []).forEach((f: any) => { body[f.key] = values[f.key] || ''; });
+    body.poll_interval = parseInt(values.poll_interval) || 30;
+    body.is_active = !!values.is_active;
+    body.auto_confirm = !!values.auto_confirm;
+    body.auto_print = !!values.auto_print;
+    onSave(body);
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-sm">
+      <div className="w-full sm:max-w-md bg-white rounded-t-3xl sm:rounded-3xl shadow-2xl flex flex-col" style={{ maxHeight: '90vh' }}>
+        <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100 flex-shrink-0">
+          <h2 className="font-black text-slate-800">âš™ï¸ {settings.name} AyarlarÄ±</h2>
+          <button onClick={onClose} className="w-8 h-8 rounded-xl bg-slate-100 flex items-center justify-center text-slate-500">âœ•</button>
+        </div>
+
+        <div className="flex-1 overflow-y-auto p-5 space-y-3">
+          {settings.panel_url && (
+            <div className="bg-blue-50 border border-blue-100 rounded-2xl p-3 text-sm text-blue-700">
+              ğŸ’¡ Panel: <a href={settings.panel_url} target="_blank" className="font-bold underline" rel="noreferrer">{settings.panel_url}</a>
+            </div>
+          )}
+
+          {(settings.fields || []).map((f: any) => (
+            <div key={f.key}>
+              <label className="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-1.5">{f.label}{f.required && ' *'}</label>
+              <input
+                type={f.password ? 'password' : 'text'}
+                value={values[f.key] || ''}
+                onChange={(e) => setValues({ ...values, [f.key]: e.target.value })}
+                placeholder={f.placeholder || ''}
+                className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+              />
+            </div>
+          ))}
+
+          {settings.show_poll !== false && (
+            <div>
+              <label className="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-1.5">Kontrol SÄ±klÄ±ÄŸÄ± (sn)</label>
+              <input type="number" value={values.poll_interval} onChange={(e) => setValues({ ...values, poll_interval: e.target.value })} className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400" />
+            </div>
+          )}
+
+          {[{ key: 'is_active', label: 'Entegrasyonu Aktif Et' }, { key: 'auto_confirm', label: 'SipariÅŸleri Otomatik Onayla' }, { key: 'auto_print', label: 'Gelen SipariÅŸi Otomatik YazdÄ±r' }].map((item) => (
+            <label key={item.key} className="flex items-center gap-3 cursor-pointer p-3 bg-slate-50 rounded-xl">
+              <div className={`w-11 h-6 rounded-full transition-colors relative ${values[item.key] ? 'bg-emerald-500' : 'bg-slate-200'}`}>
+                <div className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${values[item.key] ? 'translate-x-5' : 'translate-x-0.5'}`} />
+              </div>
+              <span className="font-bold text-sm text-slate-700">{item.label}</span>
+              <input type="checkbox" checked={!!values[item.key]} onChange={(e) => setValues({ ...values, [item.key]: e.target.checked })} className="hidden" />
+            </label>
+          ))}
+        </div>
+
+        <div className="px-5 py-4 border-t border-slate-100 flex gap-3 flex-shrink-0">
+          <button onClick={onClose} className="flex-1 py-3 bg-slate-100 text-slate-700 font-bold rounded-2xl text-sm">VazgeÃ§</button>
+          <button onClick={handleSave} className="flex-1 py-3 bg-blue-600 text-white font-bold rounded-2xl text-sm">Kaydet</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// âœ… PAKET Ä°Ã‡Ä°NDEN VEYA SUNUCUDAN LOGOYU SIFIR HATAYLA YÃœKLEYEN AKILLI BÄ°LEÅEN
+function PlatformLogo({ platformKey, name }: { platformKey: string; name: string }) {
+  const [attempt, setAttempt] = useState(0);
+  const base = getBaseUrl().replace(/\/$/, '');
+  const key = (platformKey || '').toLowerCase();
+  const cleanKey = key.replace(/[^a-z0-9]/g, '');
+
+  const candidates: string[] = [
+    // 1. Uygulama iÃ§ine gÃ¶mdÃ¼ÄŸÃ¼mÃ¼z yerel klasÃ¶rdeki gÃ¶rseller
+    `/platform-logos/${key}.png`,
+    `/platform-logos/${cleanKey}.png`,
+    `/platform-logos/${key}.jpg`,
+    `/platform-logos/${key}.svg`,
+    `/platform-logos/${key}.webp`,
+  ];
+
+  // Ä°sim eÅŸleÅŸmeleri
+  if (key.includes('yemek')) candidates.push('/platform-logos/yemeksepeti.png');
+  if (key.includes('getir')) candidates.push('/platform-logos/getir.png');
+  if (key.includes('trendyol')) candidates.push('/platform-logos/trendyol.png', '/platform-logos/trendyolgo.png');
+  if (key.includes('migros')) candidates.push('/platform-logos/migros.png', '/platform-logos/migrosyemek.png');
+
+  // 2. MasaÃ¼stÃ¼ tÃ¼nel sunucu servisleri
+  if (base) {
+    candidates.push(`${base}/mobile/platform-logo/${encodeURIComponent(platformKey)}`);
+    candidates.push(`${base}/mobile/platform-logo/${encodeURIComponent(key)}`);
+    candidates.push(`${base}/_internal/assets/images/platforms/${key}.png`);
+    candidates.push(`${base}/assets/images/platforms/${key}.png`);
+  }
+
+  const currentSrc = candidates[attempt];
+
+  if (!currentSrc || attempt >= candidates.length) {
+    const colors: Record<string, string> = {
+      yemeksepeti: 'bg-pink-500 text-white',
+      getir: 'bg-purple-600 text-amber-300',
+      trendyol: 'bg-orange-500 text-white',
+      migros: 'bg-orange-400 text-white',
+    };
+    const colorClass = Object.entries(colors).find(([k]) => key.includes(k))?.[1] || 'bg-slate-700 text-white';
+
+    return (
+      <div className={`w-full h-full rounded-full ${colorClass} flex items-center justify-center font-black text-base shadow-inner`}>
+        {(name || '?').charAt(0).toUpperCase()}
+      </div>
+    );
+  }
+
+  return (
+    <img
+      src={currentSrc}
+      alt={name}
+      className="w-full h-full object-contain rounded-full"
+      onError={() => setAttempt((prev) => prev + 1)}
+    />
+  );
+}
+
+
+==================================================
+DOSYA: src\components\pages\POS.tsx
+==================================================
+import { useState, useEffect, useCallback } from 'react';
+import { Plus, ShoppingCart, CheckCircle, XCircle, Truck, CreditCard, Edit2, Printer, Package, UtensilsCrossed, Eye } from 'lucide-react';
+import { api, money } from '../../api/client';
+import { useStore, CartItem } from '../../store/useStore';
+import toast from 'react-hot-toast';
+import Modal from '../ui/Modal';
+import CustomerPicker from '../ui/CustomerPicker';
+import PaymentPicker from '../ui/PaymentPicker';
+import PosOverlay from '../ui/PosOverlay';
+
+type PosTabType = 'active' | 'tables' | 'self' | 'package' | 'done';
+
+interface Order {
+  id: number;
+  order_no: string;
+  sale_type: string;
+  status: string;
+  delivery_status: string;
+  grand_total: number;
+  items_count: number;
+  created_at: string;
+  created_time: string;
+  waiting_minutes: number;
+  customer_name: string;
+  customer_phone: string;
+  address: string;
+  table_code: string;
+  table_id?: number;
+  customer_id?: number;
+  salon_name: string;
+  courier_name: string;
+  source_name: string;
+  payment_method: string;
+  note: string;
+  cancel_reason: string;
+  items?: any[];
+  products?: any[];
+}
+
+interface Table {
+  id: number;
+  code: string;
+  salon_name: string;
+  status: string;
+  open_order?: { order_id: number; grand_total: number };
+}
+
+export default function POS() {
+  const { posTab, setPosTab, openTable, openSelf, openPackage, ovOpen, setOvOpen } = useStore();
+  
+  // âœ… Sekme Durumu useStore Ä°le Senkronize Edildi
+  const activeTab = (posTab as PosTabType) || 'active';
+  const setActiveTab = (tab: PosTabType) => setPosTab(tab);
+
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [tables, setTables] = useState<Table[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [showCustomerPicker, setShowCustomerPicker] = useState(false);
+  const [showPaymentModal, setShowPaymentModal] = useState<{ orderId: number } | null>(null);
+  const [cancelModal, setCancelModal] = useState<{ orderId: number } | null>(null);
+  const [cancelReason, setCancelReason] = useState('');
+  const [courierModal, setCourierModal] = useState<{ orderId: number } | null>(null);
+  const [couriers, setCouriers] = useState<{ id: number; name: string }[]>([]);
+
+  const loadData = useCallback(async () => {
+    setLoading(true);
+    try {
+      if (activeTab === 'tables') {
+        const d = await api('/mobile/tables');
+        setTables(d.tables || []);
+      } else {
+        const urlMap: Record<string, string> = {
+          active: '/mobile/orders/active',
+          self: '/mobile/orders/self',
+          package: '/mobile/orders/package',
+          done: '/mobile/orders/completed',
+        };
+        const d = await api(urlMap[activeTab]);
+        setOrders(d.orders || []);
+      }
+    } catch {
+      toast.error('YÃ¼klenemedi');
+    } finally {
+      setLoading(false);
+    }
+  }, [activeTab]);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
+
+  useEffect(() => {
+    if (!ovOpen) loadData();
+  }, [ovOpen, loadData]);
+
+  const doAction = async (orderId: number, action: string, extra: Record<string, any> = {}) => {
+    try {
+      const d = await api('/mobile/order/action', {
+        method: 'POST',
+        body: { order_id: orderId, action, ...extra },
+      });
+      if (!d.ok) {
+        if (d.need_courier) {
+          const cr = await api('/mobile/couriers');
+          setCouriers(cr.couriers || []);
+          setCourierModal({ orderId });
+          return;
+        }
+        toast.error(d.error || 'Hata');
+        return;
+      }
+      toast.success(d.message || 'Tamam');
+      loadData();
+    } catch (e: any) {
+      toast.error(e.message || 'Hata');
+    }
+  };
+
+  const handleViewOrEditOrder = async (o: Order) => {
+    const isOrderOpen = o.status === 'OPEN';
+    const toastId = toast.loading(isOrderOpen ? 'Adisyon yÃ¼kleniyor...' : 'SipariÅŸ detaylarÄ± yÃ¼kleniyor...');
+
+    let rawItems: any[] = o.items || o.products || [];
+    let orderId = o.id;
+
+    if (rawItems.length === 0) {
+      const endpoints = [
+        `/mobile/table-order?table_id=${o.table_id}`,
+        `/mobile/order-detail?id=${o.id}`,
+        `/mobile/order-detail?order_id=${o.id}`,
+        `/mobile/order/detail?order_id=${o.id}`,
+        `/mobile/order/detail?id=${o.id}`,
+        `/mobile/order?id=${o.id}`,
+        `/mobile/order?order_id=${o.id}`,
+        `/mobile/order-items?order_id=${o.id}`,
+      ];
+
+      for (const ep of endpoints) {
+        if (ep.includes('undefined')) continue;
+        try {
+          const data = await api(ep);
+          const orderObj = data?.order || data;
+          const fetchedItems = orderObj?.items || orderObj?.products || data?.items || data?.products || data?.order_items;
+
+          if (fetchedItems && Array.isArray(fetchedItems) && fetchedItems.length > 0) {
+            rawItems = fetchedItems;
+            if (orderObj?.id) orderId = orderObj.id;
+            break;
+          }
+        } catch {
+          // Sonraki adresi dene
+        }
+      }
+    }
+
+    const newCart: Record<string, CartItem> = {};
+    rawItems.forEach((it: any, idx: number) => {
+      const pid = it.product_id || it.id || (idx + 1);
+      newCart[String(pid)] = {
+        id: pid,
+        name: it.name || it.product_name || it.title || 'ÃœrÃ¼n',
+        price: parseFloat(it.unit_price) || parseFloat(it.price) || 0,
+        qty: parseInt(it.quantity) || parseInt(it.qty) || parseInt(it.count) || 1,
+        note: it.note || it.product_note || '',
+        is_gift: !!(it.is_gift || it.gift),
+        discount_type: it.discount_type || '',
+        discount_value: parseFloat(it.discount_value) || 0,
+      };
+    });
+
+    toast.dismiss(toastId);
+
+    useStore.setState({
+      cart: newCart,
+      currentOrderId: orderId,
+      isReadOnly: !isOrderOpen,
+      saleMode: o.sale_type === 'TABLE' ? 'table' : o.sale_type === 'PACKAGE' ? 'package' : 'self',
+      table: o.table_id ? { id: o.table_id, code: o.table_code || '' } : null,
+      pkgCust: o.customer_id ? { id: o.customer_id, name: o.customer_name || 'MÃ¼ÅŸteri', phone: o.customer_phone, address: o.address } : null,
+      ovOpen: true,
+    });
+  };
+
+  const tabs: { id: PosTabType; label: string; icon: any }[] = [
+    { id: 'active', label: 'Aktif', icon: ShoppingCart },
+    { id: 'tables', label: 'Masalar', icon: UtensilsCrossed },
+    { id: 'self', label: 'Al-GÃ¶tÃ¼r', icon: Package },
+    { id: 'package', label: 'Paket', icon: Truck },
+    { id: 'done', label: 'Tamamlanan', icon: CheckCircle },
+  ];
+
+  return (
+    <div className="flex flex-col h-full">
+      {/* Tabs */}
+      <div className="bg-white border-b border-slate-100 px-3 py-2 flex gap-1.5 overflow-x-auto flex-shrink-0">
+        {tabs.map((t) => {
+          const Icon = t.icon;
+          const active = activeTab === t.id;
+          return (
+            <button
+              key={t.id}
+              onClick={() => setActiveTab(t.id)}
+              className={`flex items-center gap-1.5 px-3 py-2 rounded-xl font-bold text-xs whitespace-nowrap transition-all ${
+                active
+                  ? 'bg-blue-600 text-white shadow-sm'
+                  : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
+              }`}
+            >
+              <Icon size={14} />
+              {t.label}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Content */}
+      <div className="flex-1 overflow-y-auto p-3">
+        {activeTab === 'self' && (
+          <button
+            onClick={() => {
+              useStore.setState({ cart: {}, currentOrderId: null, isReadOnly: false });
+              openSelf();
+            }}
+            className="w-full mb-3 py-3 bg-emerald-600 text-white font-bold rounded-2xl flex items-center justify-center gap-2 active:scale-95 transition-transform"
+          >
+            <Plus size={18} /> Yeni Al-GÃ¶tÃ¼r
+          </button>
+        )}
+        {activeTab === 'package' && (
+          <button
+            onClick={() => {
+              useStore.setState({ cart: {}, currentOrderId: null, isReadOnly: false });
+              setShowCustomerPicker(true);
+            }}
+            className="w-full mb-3 py-3 bg-blue-600 text-white font-bold rounded-2xl flex items-center justify-center gap-2 active:scale-95 transition-transform"
+          >
+            <Plus size={18} /> Yeni Paket SipariÅŸ
+          </button>
+        )}
+
+        {loading ? (
+          <div className="space-y-3">
+            {[1,2,3].map(i => <div key={i} className="h-36 bg-slate-200 rounded-2xl animate-pulse" />)}
+          </div>
+        ) : activeTab === 'tables' ? (
+          <TablesGrid tables={tables} onSelect={(t) => {
+            useStore.setState({ cart: {}, currentOrderId: null, isReadOnly: false });
+            openTable(t);
+          }} />
+        ) : orders.length === 0 ? (
+          <EmptyState tab={activeTab} />
+        ) : (
+          <div className="grid gap-3 sm:grid-cols-2">
+            {orders.map((o) => (
+              <OrderCard
+                key={o.id}
+                order={o}
+                onPay={() => setShowPaymentModal({ orderId: o.id })}
+                onCancel={() => { setCancelReason(''); setCancelModal({ orderId: o.id }); }}
+                onDelivery={() => doAction(o.id, 'delivery')}
+                onDelivered={() => doAction(o.id, 'delivered')}
+                onPrint={() => doAction(o.id, 'print')}
+                onEdit={() => handleViewOrEditOrder(o)}
+              />
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Modals */}
+      {showCustomerPicker && (
+        <CustomerPicker
+          onSelect={(c) => {
+            setShowCustomerPicker(false);
+            openPackage(c);
+          }}
+          onClose={() => setShowCustomerPicker(false)}
+        />
+      )}
+
+      {showPaymentModal && (
+        <PaymentPicker
+          onSelect={async (method) => {
+            setShowPaymentModal(null);
+            await doAction(showPaymentModal.orderId, 'pay', { method });
+          }}
+          onClose={() => setShowPaymentModal(null)}
+        />
+      )}
+
+      {cancelModal && (
+        <Modal title="Ä°ptal Sebebi" onClose={() => setCancelModal(null)}
+          onConfirm={async () => {
+            await doAction(cancelModal.orderId, 'cancel', { reason: cancelReason || 'Mobil iptal' });
+            setCancelModal(null);
+          }}
+        >
+          <input
+            type="text"
+            value={cancelReason}
+            onChange={(e) => setCancelReason(e.target.value)}
+            placeholder="Ä°ptal sebebini girin..."
+            className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+          />
+        </Modal>
+      )}
+
+      {courierModal && (
+        <Modal title="Kurye SeÃ§" onClose={() => setCourierModal(null)}>
+          <div className="space-y-2">
+            {couriers.map((c) => (
+              <button
+                key={c.id}
+                onClick={async () => {
+                  await doAction(courierModal.orderId, 'delivery', { courier_id: c.id });
+                  setCourierModal(null);
+                }}
+                className="w-full flex items-center gap-3 px-4 py-3 bg-slate-50 rounded-xl hover:bg-blue-50 transition-colors"
+              >
+                <Truck size={16} className="text-blue-500" />
+                <span className="font-semibold">{c.name}</span>
+              </button>
+            ))}
+          </div>
+        </Modal>
+      )}
+
+      {/* POS Overlay */}
+      {ovOpen && <PosOverlay onClose={() => { useStore.setState({ currentOrderId: null, isReadOnly: false }); setOvOpen(false); loadData(); }} />}
+    </div>
+  );
+}
+
+function OrderCard({ order: o, onPay, onCancel, onDelivery, onDelivered, onPrint, onEdit }: any) {
+  const isOpen = o.status === 'OPEN';
+  const isClosed = o.status === 'CLOSED';
+  const isCancelled = o.status === 'CANCELLED';
+  const ds = (o.delivery_status || '').toUpperCase();
+  const onWay = ds === 'ON_THE_WAY' || ds === 'ON_WAY' || ds === 'DELIVERY';
+  const delivered = ds === 'DELIVERED';
+
+  const wait = parseInt(o.waiting_minutes || 0);
+  const waitColor = wait >= 15 ? 'text-red-600' : wait >= 5 ? 'text-orange-500' : 'text-emerald-600';
+
+  const sourceLabel = o.source_name || (o.sale_type === 'TABLE' ? 'Masa' : o.sale_type === 'SELF' ? 'Al-GÃ¶tÃ¼r' : 'Paket Servis');
+
+  let statusBadge = { text: 'ğŸŸ¢ Yeni', cls: 'bg-emerald-100 text-emerald-700' };
+  if (isClosed) statusBadge = { text: 'âœ… TamamlandÄ±', cls: 'bg-emerald-100 text-emerald-700' };
+  else if (isCancelled) statusBadge = { text: 'âŒ Ä°ptal', cls: 'bg-red-100 text-red-700' };
+  else if (o.sale_type === 'PACKAGE') {
+    if (onWay) statusBadge = { text: 'ğŸ”µ Yolda', cls: 'bg-blue-100 text-blue-700' };
+    else if (delivered) statusBadge = { text: 'âœ… Teslim', cls: 'bg-emerald-100 text-emerald-700' };
+    else statusBadge = { text: 'ğŸŸ¡ HazÄ±rlanÄ±yor', cls: 'bg-amber-100 text-amber-700' };
+  }
+
+  return (
+    <div className="bg-white border border-slate-100 rounded-2xl p-4 shadow-sm hover:border-blue-200 transition-all">
+      <div onClick={onEdit} className="cursor-pointer">
+        <div className="flex items-start justify-between gap-2 mb-3">
+          <div>
+            <div className="font-black text-slate-800 text-sm">#{o.order_no} Â· {sourceLabel}</div>
+            {o.sale_type === 'TABLE' && o.table_code && (
+              <div className="text-xs text-slate-500 mt-0.5">ğŸª‘ {o.table_code}{o.salon_name ? ` Â· ${o.salon_name}` : ''}</div>
+            )}
+          </div>
+          <span className={`text-xs font-bold px-2 py-1 rounded-lg whitespace-nowrap ${statusBadge.cls}`}>{statusBadge.text}</span>
+        </div>
+
+        <div className="space-y-1 mb-3">
+          {o.sale_type === 'PACKAGE' && o.customer_name && (
+            <div className="text-sm text-slate-600">ğŸ‘¤ <strong>{o.customer_name}</strong>{o.customer_phone && ` Â· ${o.customer_phone}`}</div>
+          )}
+          {o.address && <div className="text-xs text-slate-500 truncate">ğŸ“ {o.address}</div>}
+          {o.courier_name && <div className="text-xs text-blue-600 font-bold">ğŸ›µ {o.courier_name}</div>}
+          
+          {o.payment_method && (o.sale_type === 'PACKAGE' || isClosed) && (
+            <div className="text-xs text-emerald-800 font-bold bg-emerald-50 border border-emerald-100 px-2 py-1 rounded-lg inline-flex items-center gap-1 mt-0.5">
+              ğŸ’³ Ã–deme: <span className="text-emerald-900 font-black">{o.payment_method}</span>
+            </div>
+          )}
+
+          {o.note && <div className="text-xs bg-amber-50 text-amber-700 px-2 py-1 rounded-lg mt-1">ğŸ“ {o.note}</div>}
+          {isCancelled && o.cancel_reason && (
+            <div className="text-xs bg-red-50 text-red-600 px-2 py-1 rounded-lg mt-1">âŒ {o.cancel_reason}</div>
+          )}
+        </div>
+
+        <div className="flex items-center justify-between mb-3">
+          <div className="text-lg font-black text-emerald-600">{money(o.grand_total)}</div>
+          <div className="flex items-center gap-3 text-xs text-slate-500">
+            <span>ğŸ” {o.items_count} Ã¼rÃ¼n</span>
+            <span>ğŸ•’ {o.created_time || '-'}</span>
+            {isOpen && <span className={`font-bold ${waitColor}`}>â± {wait}dk</span>}
+          </div>
+        </div>
+      </div>
+
+      <div className="flex flex-wrap gap-1.5 pt-2 border-t border-slate-50">
+        {isOpen && o.sale_type !== 'PACKAGE' && (
+          <button onClick={onPay} className="flex-1 min-w-0 py-2 bg-emerald-600 text-white text-xs font-bold rounded-xl flex items-center justify-center gap-1 active:scale-95 transition-transform">
+            <CreditCard size={13} /> Ã–deme
+          </button>
+        )}
+        {isOpen && o.sale_type === 'PACKAGE' && !onWay && !delivered && (
+          <button onClick={onDelivery} className="flex-1 min-w-0 py-2 bg-blue-600 text-white text-xs font-bold rounded-xl flex items-center justify-center gap-1 active:scale-95 transition-transform">
+            <Truck size={13} /> Yola Ã‡Ä±ktÄ±
+          </button>
+        )}
+        {isOpen && o.sale_type === 'PACKAGE' && onWay && (
+          <button onClick={onDelivered} className="flex-1 min-w-0 py-2 bg-emerald-600 text-white text-xs font-bold rounded-xl flex items-center justify-center gap-1 active:scale-95 transition-transform">
+            <CheckCircle size={13} /> Teslim
+          </button>
+        )}
+        {isOpen ? (
+          <button onClick={onEdit} className="py-2 px-3 bg-blue-50 text-blue-600 text-xs font-bold rounded-xl flex items-center gap-1 active:scale-95 transition-transform">
+            <Edit2 size={13} /> DÃ¼zenle
+          </button>
+        ) : (
+          <button onClick={onEdit} className="py-2 px-3 bg-slate-100 text-slate-600 text-xs font-bold rounded-xl flex items-center gap-1 active:scale-95 transition-transform">
+            <Eye size={13} /> Ä°ncele
+          </button>
+        )}
+        {isOpen && (
+          <button onClick={onCancel} className="py-2 px-3 bg-red-50 text-red-600 text-xs font-bold rounded-xl flex items-center gap-1 active:scale-95 transition-transform">
+            <XCircle size={13} />
+          </button>
+        )}
+        <button onClick={onPrint} className="py-2 px-3 bg-slate-100 text-slate-600 text-xs font-bold rounded-xl flex items-center gap-1 active:scale-95 transition-transform">
+          <Printer size={13} />
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function TablesGrid({ tables, onSelect }: { tables: Table[]; onSelect: (t: any) => void }) {
+  const bySalon: Record<string, Table[]> = {};
+  tables.forEach((t) => {
+    const k = t.salon_name || 'DiÄŸer';
+    if (!bySalon[k]) bySalon[k] = [];
+    bySalon[k].push(t);
+  });
+
+  return (
+    <div className="space-y-4">
+      {Object.entries(bySalon).map(([salon, ts]) => (
+        <div key={salon}>
+          <div className="text-xs font-black text-slate-500 uppercase tracking-wider mb-2">{salon}</div>
+          <div className="grid grid-cols-3 gap-2">
+            {ts.map((t) => {
+              const isOpen = t.status === 'OPEN';
+              return (
+                <button
+                  key={t.id}
+                  onClick={() => onSelect({ id: t.id, code: t.code })}
+                  className={`rounded-2xl p-3 text-center border-2 transition-all active:scale-95 ${
+                    isOpen
+                      ? 'border-red-300 bg-red-50'
+                      : 'border-emerald-300 bg-emerald-50'
+                  }`}
+                >
+                  <div className="font-black text-slate-800 text-sm">{t.code}</div>
+                  <div className={`text-xs font-bold mt-1 ${isOpen ? 'text-red-600' : 'text-emerald-600'}`}>
+                    {isOpen ? 'AÃ‡IK' : 'BOÅ'}
+                  </div>
+                  {t.open_order && (
+                    <div className="text-xs text-emerald-700 font-bold mt-1">{money(t.open_order.grand_total)}</div>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function EmptyState({ tab }: { tab: string }) {
+  return (
+    <div className="flex flex-col items-center justify-center py-20 text-slate-400">
+      <ShoppingCart size={48} className="mb-3 opacity-30" />
+      <div className="font-bold">KayÄ±t bulunamadÄ±</div>
+      <div className="text-sm mt-1">
+        {tab === 'done' ? 'Bu iÅŸ gÃ¼nÃ¼nde tamamlanan sipariÅŸ yok' : 'Aktif sipariÅŸ yok'}
+      </div>
+    </div>
+  );
+}
+
+
+==================================================
+DOSYA: src\components\pages\Reports.tsx
+==================================================
+import { useState, useEffect } from 'react';
+import { BarChart3, TrendingUp, Package, CreditCard, Clock, Users, Truck } from 'lucide-react';
+import { api, money } from '../../api/client';
+import toast from 'react-hot-toast';
+
+type ReportTab = 'summary' | 'categories' | 'products' | 'payments' | 'hourly' | 'staff' | 'couriers';
+
+export default function Reports() {
+  const [tab, setTab] = useState<ReportTab>('summary');
+  const [date, setDate] = useState(() => new Date().toISOString().slice(0, 10));
+  const [data, setData] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
+
+  const load = async () => {
+    setLoading(true);
+    setData(null);
+    try {
+      const urlMap: Record<ReportTab, string> = {
+        summary: '/mobile/reports/summary',
+        categories: '/mobile/reports/categories',
+        products: '/mobile/reports/products',
+        payments: '/mobile/reports/payments',
+        hourly: '/mobile/reports/hourly',
+        staff: '/mobile/reports/staff',
+        couriers: '/mobile/reports/couriers',
+      };
+      const d = await api(urlMap[tab] + '?date=' + date);
+      setData(d);
+    } catch { toast.error('YÃ¼klenemedi'); }
+    finally { setLoading(false); }
+  };
+
+  useEffect(() => { load(); }, [tab, date]);
+
+  const tabs: { id: ReportTab; label: string; icon: any }[] = [
+    { id: 'summary', label: 'GÃ¼n Sonu', icon: BarChart3 },
+    { id: 'categories', label: 'Kategori', icon: Package },
+    { id: 'products', label: 'ÃœrÃ¼n', icon: TrendingUp },
+    { id: 'payments', label: 'Ã–deme', icon: CreditCard },
+    { id: 'hourly', label: 'Saatlik', icon: Clock },
+    { id: 'staff', label: 'Personel', icon: Users },
+    { id: 'couriers', label: 'Kurye', icon: Truck },
+  ];
+
+  return (
+    <div className="flex flex-col h-full">
+      {/* Date Picker */}
+      <div className="bg-white border-b border-slate-100 px-4 py-3 flex items-center gap-3 flex-shrink-0">
+        <input
+          type="date"
+          value={date}
+          onChange={(e) => setDate(e.target.value)}
+          className="border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+        />
+        <button
+          onClick={() => setDate(new Date().toISOString().slice(0, 10))}
+          className="px-3 py-2 bg-slate-100 text-slate-600 font-bold rounded-xl text-sm"
+        >
+          BugÃ¼n
+        </button>
+        <button
+          onClick={load}
+          className="px-3 py-2 bg-blue-600 text-white font-bold rounded-xl text-sm"
+        >
+          Yenile
+        </button>
+      </div>
+
+      {/* Tabs */}
+      <div className="bg-white border-b border-slate-100 px-3 py-2 flex gap-1.5 overflow-x-auto flex-shrink-0">
+        {tabs.map((t) => {
+          const Icon = t.icon;
+          const active = tab === t.id;
+          return (
+            <button
+              key={t.id}
+              onClick={() => setTab(t.id)}
+              className={`flex items-center gap-1.5 px-3 py-2 rounded-xl font-bold text-xs whitespace-nowrap transition-all ${
+                active ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-500'
+              }`}
+            >
+              <Icon size={12} />
+              {t.label}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Content */}
+      <div className="flex-1 overflow-y-auto p-4 max-w-2xl mx-auto w-full">
+        {loading ? (
+          <div className="space-y-3">
+            {[1,2,3].map(i => <div key={i} className="h-20 bg-slate-200 rounded-2xl animate-pulse" />)}
+          </div>
+        ) : data && <ReportContent tab={tab} data={data} />}
+      </div>
+    </div>
+  );
+}
+
+function ReportContent({ tab, data }: { tab: ReportTab; data: any }) {
+  if (tab === 'summary') {
+    const s = data.summary || {};
+    return (
+      <div className="space-y-4">
+        <div className="text-xs text-slate-500 font-medium">{data.start} â†’ {data.end}</div>
+        <div className="grid grid-cols-2 gap-3">
+          {[
+            { l: 'Net SatÄ±ÅŸ', v: money(s.net_sales), cls: 'from-emerald-500/10 to-green-400/10 text-emerald-700' },
+            { l: 'SipariÅŸ', v: s.orders, cls: 'from-blue-500/10 to-indigo-400/10 text-blue-700' },
+            { l: 'Ort. Adisyon', v: money(s.average_ticket), cls: 'from-orange-500/10 to-amber-400/10 text-orange-700' },
+            { l: 'Tahsilat', v: money(s.payments), cls: 'from-violet-500/10 to-purple-400/10 text-violet-700' },
+          ].map((item) => (
+            <div key={item.l} className={`bg-gradient-to-br ${item.cls.split(' ').slice(0,2).join(' ')} border border-white rounded-2xl p-4`}>
+              <div className={`text-2xl font-black ${item.cls.split(' ')[2]}`}>{item.v}</div>
+              <div className="text-xs font-bold text-slate-500 uppercase tracking-wide mt-1">{item.l}</div>
+            </div>
+          ))}
+        </div>
+        <div className="bg-white border border-slate-100 rounded-2xl divide-y divide-slate-50 shadow-sm">
+          {[
+            { l: 'ğŸª‘ Masa', v: s.table },
+            { l: 'ğŸ›ï¸ Gel-Al', v: s.self },
+            { l: 'ğŸ“¦ Paket', v: s.package },
+            { l: 'âŒ Ä°ptal', v: s.cancelled, red: true },
+            { l: 'ğŸ Ä°kram', v: s.gift },
+            { l: 'ğŸ’¸ Gider', v: money(s.expense), red: true },
+          ].map((item) => (
+            <div key={item.l} className="flex items-center justify-between px-4 py-3">
+              <span className="text-sm font-semibold text-slate-700">{item.l}</span>
+              <span className={`font-black text-sm ${item.red ? 'text-red-600' : 'text-slate-800'}`}>{item.v ?? 0}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  if (tab === 'hourly') {
+    const rows: any[] = data.rows || [];
+    const max = Math.max(...rows.map((r: any) => r.amount), 1);
+    return (
+      <div className="space-y-3">
+        <div className="bg-white border border-slate-100 rounded-2xl p-4 shadow-sm">
+          <div className="font-bold text-slate-800 mb-3">Saatlik Ciro</div>
+          <div className="flex items-end gap-0.5 h-32">
+            {Array.from({ length: 24 }, (_, h) => {
+              const amt = rows.find((r: any) => r.hour === h)?.amount || 0;
+              return (
+                <div key={h} className="flex-1 rounded-t-sm bg-blue-400" style={{ height: `${Math.max(2, (amt / max) * 100)}%` }} title={`${h}:00`} />
+              );
+            })}
+          </div>
+        </div>
+        <div className="bg-white border border-slate-100 rounded-2xl divide-y divide-slate-50 shadow-sm">
+          {rows.filter((r: any) => r.amount > 0).map((r: any) => (
+            <div key={r.hour} className="flex justify-between px-4 py-3">
+              <span className="text-sm font-semibold text-slate-700">{String(r.hour).padStart(2, '0')}:00</span>
+              <span className="font-black text-emerald-600 text-sm">{money(r.amount)}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  const rows: any[] = data.rows || [];
+  if (!rows.length) return <div className="text-center text-slate-400 py-16">KayÄ±t bulunamadÄ±</div>;
+
+  return (
+    <div className="bg-white border border-slate-100 rounded-2xl divide-y divide-slate-50 shadow-sm">
+      {rows.slice(0, 50).map((r: any, i: number) => (
+        <div key={i} className="flex items-center justify-between px-4 py-3 gap-3">
+          <div className="flex-1 min-w-0">
+            <div className="font-bold text-slate-800 text-sm truncate">
+              {r.category || r.name || r.icon + ' ' + r.name || '-'}
+            </div>
+            <div className="text-xs text-slate-500 mt-0.5">
+              {tab === 'categories' && `${r.quantity} adet Â· ikram ${r.gift}`}
+              {tab === 'products' && `${r.category} Â· ${r.quantity} adet`}
+              {tab === 'payments' && `${r.count} iÅŸlem`}
+              {tab === 'staff' && `M:${r.table_orders} G:${r.self_orders} P:${r.package_orders} Â· ${r.total_orders} sip`}
+              {tab === 'couriers' && `${r.orders} teslimat`}
+            </div>
+          </div>
+          <div className="font-black text-emerald-600 text-sm whitespace-nowrap">
+            {money(r.total ?? r.amount ?? 0)}
+          </div>
+        </div>
+      ))}
+      {rows.length > 50 && (
+        <div className="px-4 py-3 text-center text-xs text-slate-400">Ä°lk 50 kayÄ±t gÃ¶steriliyor</div>
+      )}
+    </div>
+  );
+}
+
+
+
+==================================================
+DOSYA: src\components\pages\SimplePages.tsx
+==================================================
+import { useState, useEffect, useRef } from 'react';
+import { Plus, Search, Printer, Edit2, ToggleLeft, ToggleRight } from 'lucide-react';
+import { api, money } from '../../api/client';
+import toast from 'react-hot-toast';
+import Modal from '../ui/Modal';
+
+// ==================== PRODUCTS ====================
+export function Products() {
+  const [products, setProducts] = useState<any[]>([]);
+  const [categories, setCategories] = useState<any[]>([]);
+  const [query, setQuery] = useState(''); // âœ… ARAMA STATE'Ä° EKLENDÄ°
+  const [modal, setModal] = useState<any>(null);
+  const [form, setForm] = useState({ name: '', category_id: 0, price: 0 });
+
+  const load = async () => {
+    const [p, c] = await Promise.all([api('/mobile/products'), api('/mobile/categories')]);
+    setProducts(p.products || []);
+    setCategories(c.categories || []);
+  };
+
+  useEffect(() => { load(); }, []);
+
+  const catName = (id: number) => categories.find((c) => c.id === id)?.name || 'Kategorisiz';
+
+  // âœ… ARAMA FÄ°LTRESÄ° EKLENDÄ° (ÃœrÃ¼n AdÄ± ve Kategoriye GÃ¶re)
+  const q = query.trim().toLowerCase();
+  const filtered = !q
+    ? products
+    : products.filter((p) => {
+        const name = (p.name || '').toLowerCase();
+        const cat = catName(p.category_id).toLowerCase();
+        return name.includes(q) || cat.includes(q);
+      });
+
+  const openNew = () => {
+    setForm({ name: '', category_id: categories[0]?.id || 0, price: 0 });
+    setModal('new');
+  };
+  const openEdit = (p: any) => {
+    setForm({ name: p.name, category_id: p.category_id, price: p.price });
+    setModal(p);
+  };
+
+  const save = async () => {
+    if (modal === 'new') {
+      const d = await api('/mobile/products/create', { method: 'POST', body: form });
+      if (d.ok) { toast.success('Eklendi'); setModal(null); load(); } else toast.error(d.error || 'Hata');
+    } else {
+      const d = await api('/mobile/products/update', { method: 'POST', body: { id: modal.id, ...form } });
+      if (d.ok) { toast.success('GÃ¼ncellendi'); setModal(null); load(); } else toast.error(d.error || 'Hata');
+    }
+  };
+
+  const del = async () => {
+    if (!modal || modal === 'new') return;
+    if (!confirm('Silinsin/pasife alÄ±nsÄ±n mÄ±?')) return;
+    const d = await api('/mobile/products/delete', { method: 'POST', body: { id: modal.id } });
+    if (d.ok) { toast.success('Ä°ÅŸlem yapÄ±ldÄ±'); setModal(null); load(); } else toast.error(d.error || 'Hata');
+  };
+
+  return (
+    <div className="p-4 max-w-2xl mx-auto space-y-3">
+      
+      {/* âœ… ARAMA VE YENÄ° ÃœRÃœN BUTONU */}
+      <div className="flex gap-2">
+        <div className="relative flex-1">
+          <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+          <input
+            type="search"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="ÃœrÃ¼n veya kategori ara..."
+            className="w-full bg-white border border-slate-200 rounded-2xl pl-10 pr-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+          />
+        </div>
+        <button
+          onClick={openNew}
+          className="px-4 py-3 bg-blue-600 text-white font-bold rounded-2xl text-sm flex items-center gap-1.5 whitespace-nowrap active:scale-95 transition-transform"
+        >
+          <Plus size={16} /> Yeni
+        </button>
+      </div>
+
+      {/* âœ… SONUÃ‡ SAYISI */}
+      <div className="text-xs font-bold text-slate-400 px-1">
+        {q ? `${filtered.length} sonuÃ§ Â· "${query}"` : `${products.length} Ã¼rÃ¼n`}
+      </div>
+
+      {/* âœ… LÄ°STE VEYA BOÅ DURUM EKRANI */}
+      {filtered.length === 0 ? (
+        <div className="text-center py-16 text-slate-400">
+          <Search size={40} className="mx-auto mb-3 opacity-30" />
+          <div className="font-bold">ÃœrÃ¼n bulunamadÄ±</div>
+          {q && <div className="text-sm mt-1">"{query}" iÃ§in sonuÃ§ yok</div>}
+        </div>
+      ) : (
+        <div className="grid sm:grid-cols-2 gap-3">
+          {filtered.map((p) => (
+            <div key={p.id} className="bg-white border border-slate-100 rounded-2xl p-4 flex items-center justify-between shadow-sm">
+              <div className="min-w-0 flex-1 pr-2">
+                <div className="font-bold text-slate-800 truncate">{p.name}</div>
+                <div className="text-xs text-slate-500 mt-0.5">{catName(p.category_id)}</div>
+                <div className="text-emerald-600 font-black text-sm mt-1">{money(p.price)}</div>
+              </div>
+              <button
+                onClick={() => openEdit(p)}
+                className="w-9 h-9 bg-slate-100 rounded-xl flex items-center justify-center text-slate-600 flex-shrink-0 active:scale-95 transition-transform"
+              >
+                <Edit2 size={15} />
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {modal && (
+        <Modal title={modal === 'new' ? '+ Yeni ÃœrÃ¼n' : 'âœï¸ ÃœrÃ¼n DÃ¼zenle'} onClose={() => setModal(null)} onConfirm={save} confirmText="Kaydet">
+          <div>
+            <label className="block text-xs font-bold text-slate-500 mb-1.5">ÃœrÃ¼n AdÄ± *</label>
+            <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400" />
+          </div>
+          <div>
+            <label className="block text-xs font-bold text-slate-500 mb-1.5">Kategori</label>
+            <select value={form.category_id} onChange={(e) => setForm({ ...form, category_id: parseInt(e.target.value) })} className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none">
+              {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+            </select>
+          </div>
+          <div>
+            <label className="block text-xs font-bold text-slate-500 mb-1.5">Fiyat (â‚º)</label>
+            <input type="number" step="0.01" value={form.price} onChange={(e) => setForm({ ...form, price: parseFloat(e.target.value) || 0 })} className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400" />
+          </div>
+          {modal !== 'new' && (
+            <button onClick={del} className="w-full py-3 bg-red-50 text-red-600 font-bold rounded-2xl text-sm">ğŸ—‘ï¸ Sil / Pasife Al</button>
+          )}
+        </Modal>
+      )}
+    </div>
+  );
+}
+
+// ==================== CATEGORIES ====================
+export function Categories() {
+  const [cats, setCats] = useState<any[]>([]);
+  const [modal, setModal] = useState<any>(null);
+  const [name, setName] = useState('');
+
+  const load = async () => { const d = await api('/mobile/categories'); setCats(d.categories || []); };
+  useEffect(() => { load(); }, []);
+
+  const save = async () => {
+    if (modal === 'new') {
+      const d = await api('/mobile/categories/create', { method: 'POST', body: { name } });
+      if (d.ok) { toast.success('Eklendi'); setModal(null); load(); } else toast.error(d.error || 'Hata');
+    } else {
+      const d = await api('/mobile/categories/update', { method: 'POST', body: { id: modal.id, name } });
+      if (d.ok) { toast.success('GÃ¼ncellendi'); setModal(null); load(); } else toast.error(d.error || 'Hata');
+    }
+  };
+
+  const del = async () => {
+    if (!modal || modal === 'new') return;
+    if (!confirm('Silinsin mi?')) return;
+    const d = await api('/mobile/categories/delete', { method: 'POST', body: { id: modal.id } });
+    if (d.ok) { setModal(null); load(); } else toast.error(d.error || 'Hata');
+  };
+
+  return (
+    <div className="p-4 max-w-2xl mx-auto">
+      <div className="flex justify-end mb-3">
+        <button onClick={() => { setName(''); setModal('new'); }} className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 text-white font-bold rounded-2xl text-sm">
+          <Plus size={16} /> Yeni Kategori
+        </button>
+      </div>
+      <div className="grid sm:grid-cols-2 gap-3">
+        {cats.map((c) => (
+          <div key={c.id} className="bg-white border border-slate-100 rounded-2xl p-4 flex items-center justify-between shadow-sm">
+            <div className="font-bold text-slate-800">ğŸ·ï¸ {c.name}</div>
+            <button onClick={() => { setName(c.name); setModal(c); }} className="w-9 h-9 bg-slate-100 rounded-xl flex items-center justify-center text-slate-600">
+              <Edit2 size={15} />
+            </button>
+          </div>
+        ))}
+      </div>
+      {modal && (
+        <Modal title={modal === 'new' ? '+ Yeni Kategori' : 'âœï¸ DÃ¼zenle'} onClose={() => setModal(null)} onConfirm={save} confirmText="Kaydet">
+          <div>
+            <label className="block text-xs font-bold text-slate-500 mb-1.5">Kategori AdÄ± *</label>
+            <input value={name} onChange={(e) => setName(e.target.value)} className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400" />
+          </div>
+          {modal !== 'new' && (
+            <button onClick={del} className="w-full py-3 bg-red-50 text-red-600 font-bold rounded-2xl text-sm">ğŸ—‘ï¸ Sil</button>
+          )}
+        </Modal>
+      )}
+    </div>
+  );
+}
+
+// ==================== USERS ====================
+export function Users() {
+  const [users, setUsers] = useState<any[]>([]);
+  const [query, setQuery] = useState('');
+  const [modal, setModal] = useState<any>(null);
+  const [form, setForm] = useState({ full_name: '', username: '', password: '', password_repeat: '', role: 'PERSONEL', active: true });
+  const timer = useRef<any>(null);
+
+  const load = async (q: string) => {
+    const d = await api('/mobile/users?q=' + encodeURIComponent(q));
+    setUsers(d.users || []);
+  };
+  useEffect(() => { load(''); }, []);
+
+  const handleInput = (v: string) => {
+    setQuery(v);
+    if (timer.current) clearTimeout(timer.current);
+    timer.current = setTimeout(() => load(v), 300);
+  };
+
+  const save = async () => {
+    if (modal === 'new') {
+      if (!form.password.trim()) { toast.error('Åifre zorunlu'); return; }
+      const d = await api('/mobile/users/create', { method: 'POST', body: form });
+      if (d.ok) { toast.success('Eklendi'); setModal(null); load(query); } else toast.error(d.error || 'Hata');
+    } else {
+      const d = await api('/mobile/users/update', { method: 'POST', body: { id: modal.id, ...form } });
+      if (d.ok) { toast.success('GÃ¼ncellendi'); setModal(null); load(query); } else toast.error(d.error || 'Hata');
+    }
+  };
+
+  const toggle = async (id: number) => {
+    await api('/mobile/users/toggle', { method: 'POST', body: { id } });
+    load(query);
+  };
+
+  const del = async () => {
+    if (!modal || modal === 'new') return;
+    if (!confirm('"' + modal.full_name + '" silinsin mi?')) return;
+    const d = await api('/mobile/users/delete', { method: 'POST', body: { id: modal.id } });
+    if (d.ok) { setModal(null); load(query); } else toast.error(d.error || 'Hata');
+  };
+
+  return (
+    <div className="p-4 max-w-2xl mx-auto space-y-3">
+      <div className="flex gap-2">
+        <div className="relative flex-1">
+          <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+          <input type="search" value={query} onChange={(e) => handleInput(e.target.value)} placeholder="Ad veya kullanÄ±cÄ± adÄ±..." className="w-full bg-white border border-slate-200 rounded-2xl pl-10 pr-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400" />
+        </div>
+        <button onClick={() => { setForm({ full_name: '', username: '', password: '', password_repeat: '', role: 'PERSONEL', active: true }); setModal('new'); }} className="px-4 py-3 bg-blue-600 text-white font-bold rounded-2xl text-sm flex items-center gap-1.5">
+          <Plus size={16} /> Yeni
+        </button>
+      </div>
+      {users.map((u) => (
+        <div key={u.id} className="bg-white border border-slate-100 rounded-2xl p-4 shadow-sm">
+          <div className="flex items-start justify-between gap-2">
+            <div>
+              <div className="font-bold text-slate-800">{u.full_name || '-'}</div>
+              <div className="text-xs text-slate-500 mt-0.5">@{u.username} Â· Son: {u.last_login || '-'}</div>
+              <div className="flex gap-1.5 mt-2">
+                <span className={`text-xs font-bold px-2 py-0.5 rounded-lg ${u.role === 'ADMIN' ? 'bg-violet-100 text-violet-700' : 'bg-blue-100 text-blue-700'}`}>
+                  {u.role === 'ADMIN' ? 'ğŸ‘‘ YÃ¶netici' : 'ğŸ‘¤ Personel'}
+                </span>
+                <span className={`text-xs font-bold px-2 py-0.5 rounded-lg ${u.active ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}`}>
+                  {u.active ? 'ğŸŸ¢ Aktif' : 'ğŸ”´ Pasif'}
+                </span>
+              </div>
+            </div>
+            <div className="flex gap-1.5">
+              <button onClick={() => toggle(u.id)} className="w-9 h-9 bg-slate-100 rounded-xl flex items-center justify-center text-slate-600">
+                {u.active ? <ToggleRight size={15} className="text-emerald-500" /> : <ToggleLeft size={15} />}
+              </button>
+              <button onClick={() => { setForm({ full_name: u.full_name, username: u.username, password: '', password_repeat: '', role: u.role, active: u.active }); setModal(u); }} className="w-9 h-9 bg-slate-100 rounded-xl flex items-center justify-center text-slate-600">
+                <Edit2 size={15} />
+              </button>
+            </div>
+          </div>
+        </div>
+      ))}
+      {modal && (
+        <Modal title={modal === 'new' ? '+ Yeni KullanÄ±cÄ±' : 'âœï¸ DÃ¼zenle'} onClose={() => setModal(null)} onConfirm={save} confirmText="Kaydet">
+          {['full_name', 'username', 'password', 'password_repeat'].map((field) => (
+            <div key={field}>
+              <label className="block text-xs font-bold text-slate-500 mb-1.5">{field === 'full_name' ? 'Ad Soyad *' : field === 'username' ? 'KullanÄ±cÄ± AdÄ± *' : field === 'password' ? 'Åifre' + (modal !== 'new' ? ' (boÅŸ=deÄŸiÅŸmez)' : ' *') : 'Åifre Tekrar'}</label>
+              <input type={field.includes('password') ? 'password' : 'text'} value={(form as any)[field]} onChange={(e) => setForm({ ...form, [field]: e.target.value })} className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400" />
+            </div>
+          ))}
+          <div>
+            <label className="block text-xs font-bold text-slate-500 mb-1.5">Rol</label>
+            <select value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value })} className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none">
+              <option value="PERSONEL">ğŸ‘¤ Personel</option>
+              <option value="ADMIN">ğŸ‘‘ YÃ¶netici</option>
+            </select>
+          </div>
+          <label className="flex items-center gap-3 cursor-pointer">
+            <div className={`w-11 h-6 rounded-full transition-colors relative ${form.active ? 'bg-emerald-500' : 'bg-slate-200'}`}>
+              <div className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${form.active ? 'translate-x-5' : 'translate-x-0.5'}`} />
+            </div>
+            <span className="font-bold text-sm">Aktif</span>
+            <input type="checkbox" checked={form.active} onChange={(e) => setForm({ ...form, active: e.target.checked })} className="hidden" />
+          </label>
+          {modal !== 'new' && (
+            <button onClick={del} className="w-full py-3 bg-red-50 text-red-600 font-bold rounded-2xl text-sm">ğŸ—‘ï¸ Sil</button>
+          )}
+        </Modal>
+      )}
+    </div>
+  );
+}
+
+// ==================== PRINTERS ====================
+export function Printers() {
+  const [printers, setPrinters] = useState<any[]>([]);
+  const [query, setQuery] = useState('');
+  const [modal, setModal] = useState<any>(null);
+  const [winPrinters, setWinPrinters] = useState<string[]>([]);
+  const [form, setForm] = useState({ name: '', printer_name: '', is_default: false, is_active: true });
+  const timer = useRef<any>(null);
+
+  const load = async (q: string) => {
+    const d = await api('/mobile/printers?q=' + encodeURIComponent(q));
+    setPrinters(d.printers || []);
+  };
+  useEffect(() => { load(''); }, []);
+
+  const openForm = async (p: any) => {
+    const wd = await api('/mobile/printers/windows');
+    setWinPrinters(wd.printers || []);
+    if (p === 'new') {
+      setForm({ name: '', printer_name: '', is_default: false, is_active: true });
+    } else {
+      setForm({ name: p.name, printer_name: p.printer_name, is_default: p.is_default, is_active: p.is_active });
+    }
+    setModal(p);
+  };
+
+  const save = async () => {
+    const body = form;
+    if (modal === 'new') {
+      const d = await api('/mobile/printers/create', { method: 'POST', body });
+      if (d.ok) { toast.success('Eklendi'); setModal(null); load(query); } else toast.error(d.error || 'Hata');
+    } else {
+      const d = await api('/mobile/printers/update', { method: 'POST', body: { id: modal.id, ...body } });
+      if (d.ok) { toast.success('GÃ¼ncellendi'); setModal(null); load(query); } else toast.error(d.error || 'Hata');
+    }
+  };
+
+  const setDefault = async (id: number) => {
+    await api('/mobile/printers/set-default', { method: 'POST', body: { id } });
+    load(query);
+  };
+
+  const testPrint = async (id: number, pname: string) => {
+    const d = await api('/mobile/printers/test', { method: 'POST', body: { id, printer_name: pname } });
+    toast[d.ok ? 'success' : 'error'](d.message || d.error || 'Hata');
+  };
+
+  const del = async () => {
+    if (!modal || modal === 'new') return;
+    if (!confirm('"' + modal.name + '" silinsin mi?')) return;
+    const d = await api('/mobile/printers/delete', { method: 'POST', body: { id: modal.id } });
+    if (d.ok) { setModal(null); load(query); } else toast.error(d.error || 'Hata');
+  };
+
+  return (
+    <div className="p-4 max-w-2xl mx-auto space-y-3">
+      <div className="flex gap-2">
+        <div className="relative flex-1">
+          <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+          <input type="search" value={query} onChange={(e) => { setQuery(e.target.value); if (timer.current) clearTimeout(timer.current); timer.current = setTimeout(() => load(e.target.value), 300); }} placeholder="YazÄ±cÄ± ara..." className="w-full bg-white border border-slate-200 rounded-2xl pl-10 pr-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400" />
+        </div>
+        <button onClick={() => openForm('new')} className="px-4 py-3 bg-blue-600 text-white font-bold rounded-2xl text-sm flex items-center gap-1.5">
+          <Plus size={16} /> Yeni
+        </button>
+      </div>
+      {printers.map((p) => (
+        <div key={p.id} className="bg-white border border-slate-100 rounded-2xl p-4 shadow-sm">
+          <div className="flex items-start justify-between gap-2">
+            <div>
+              <div className="font-bold text-slate-800">ğŸ–¨ï¸ {p.name} {p.is_default && <span className="text-xs bg-blue-100 text-blue-600 px-1.5 py-0.5 rounded-lg ml-1">VarsayÄ±lan</span>}</div>
+              <div className="text-xs text-slate-500 mt-0.5 break-all">{p.printer_name}</div>
+              <span className={`text-xs font-bold px-2 py-0.5 rounded-lg mt-1.5 inline-block ${p.is_active ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}`}>
+                {p.is_active ? 'ğŸŸ¢ Aktif' : 'ğŸ”´ Pasif'}
+              </span>
+            </div>
+            <div className="flex gap-1.5">
+              {!p.is_default && (
+                <button onClick={() => setDefault(p.id)} className="w-9 h-9 bg-amber-50 rounded-xl flex items-center justify-center text-amber-600" title="VarsayÄ±lan Yap">â­</button>
+              )}
+              <button onClick={() => testPrint(p.id, p.printer_name)} className="w-9 h-9 bg-emerald-50 rounded-xl flex items-center justify-center text-emerald-600">
+                <Printer size={15} />
+              </button>
+              <button onClick={() => openForm(p)} className="w-9 h-9 bg-slate-100 rounded-xl flex items-center justify-center text-slate-600">
+                <Edit2 size={15} />
+              </button>
+            </div>
+          </div>
+        </div>
+      ))}
+      {modal && (
+        <Modal title={modal === 'new' ? '+ Yeni YazÄ±cÄ±' : 'âœï¸ DÃ¼zenle'} onClose={() => setModal(null)} onConfirm={save} confirmText="Kaydet">
+          <div>
+            <label className="block text-xs font-bold text-slate-500 mb-1.5">GÃ¶rÃ¼nen Ad *</label>
+            <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Adisyon YazÄ±cÄ±sÄ±" className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400" />
+          </div>
+          <div>
+            <label className="block text-xs font-bold text-slate-500 mb-1.5">Windows YazÄ±cÄ± *</label>
+            {winPrinters.length > 0 ? (
+              <select value={form.printer_name} onChange={(e) => setForm({ ...form, printer_name: e.target.value })} className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none">
+                <option value="">â€” SeÃ§in â€”</option>
+                {winPrinters.map((n) => <option key={n} value={n}>{n}</option>)}
+              </select>
+            ) : (
+              <input value={form.printer_name} onChange={(e) => setForm({ ...form, printer_name: e.target.value })} placeholder="YazÄ±cÄ± adÄ±" className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400" />
+            )}
+          </div>
+          {[{ k: 'is_default', l: 'VarsayÄ±lan Yap' }, { k: 'is_active', l: 'Aktif' }].map((item) => (
+            <label key={item.k} className="flex items-center gap-3 cursor-pointer">
+              <div className={`w-11 h-6 rounded-full transition-colors relative ${(form as any)[item.k] ? 'bg-emerald-500' : 'bg-slate-200'}`}>
+                <div className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${(form as any)[item.k] ? 'translate-x-5' : 'translate-x-0.5'}`} />
+              </div>
+              <span className="font-bold text-sm">{item.l}</span>
+              <input type="checkbox" checked={!!(form as any)[item.k]} onChange={(e) => setForm({ ...form, [item.k]: e.target.checked })} className="hidden" />
+            </label>
+          ))}
+          {modal !== 'new' && (
+            <button onClick={del} className="w-full py-3 bg-red-50 text-red-600 font-bold rounded-2xl text-sm">ğŸ—‘ï¸ Sil</button>
+          )}
+        </Modal>
+      )}
+    </div>
+  );
+}
+
+// ==================== TABLES DEF ====================
+export function TablesDef() {
+  const [salons, setSalons] = useState<any[]>([]);
+  const [salonModal, setSalonModal] = useState<any>(null);
+  const [tableModal, setTableModal] = useState<any>(null);
+  const [salonName, setSalonName] = useState('');
+  const [tableForm, setTableForm] = useState({ salon_id: 0, code: '' });
+
+  const load = async () => {
+    const d = await api('/mobile/salons');
+    setSalons(d.salons || []);
+  };
+  useEffect(() => { load(); }, []);
+
+  const saveSalon = async () => {
+    if (salonModal === 'new') {
+      const d = await api('/mobile/salons/create', { method: 'POST', body: { name: salonName } });
+      if (d.ok) { setSalonModal(null); load(); } else toast.error(d.error || 'Hata');
+    } else {
+      const d = await api('/mobile/salons/update', { method: 'POST', body: { id: salonModal.id, name: salonName } });
+      if (d.ok) { setSalonModal(null); load(); } else toast.error(d.error || 'Hata');
+    }
+  };
+
+  const delSalon = async () => {
+    if (!salonModal || salonModal === 'new') return;
+    if (!confirm('Salon silinsin mi?')) return;
+    const d = await api('/mobile/salons/delete', { method: 'POST', body: { id: salonModal.id } });
+    if (d.ok) { setSalonModal(null); load(); } else toast.error(d.error || 'Hata');
+  };
+
+  const saveTable = async () => {
+    if (tableModal === 'new') {
+      const d = await api('/mobile/tables/create', { method: 'POST', body: tableForm });
+      if (d.ok) { setTableModal(null); load(); } else toast.error(d.error || 'Hata');
+    } else {
+      const d = await api('/mobile/tables/update', { method: 'POST', body: { id: tableModal.id, ...tableForm } });
+      if (d.ok) { setTableModal(null); load(); } else toast.error(d.error || 'Hata');
+    }
+  };
+
+  const delTable = async () => {
+    if (!tableModal || tableModal === 'new') return;
+    if (!confirm('Masa silinsin mi?')) return;
+    const d = await api('/mobile/tables/delete', { method: 'POST', body: { id: tableModal.id } });
+    if (d.ok) { setTableModal(null); load(); } else toast.error(d.error || 'Hata');
+  };
+
+  return (
+    <div className="p-4 max-w-2xl mx-auto space-y-4">
+      <div className="flex justify-end gap-2">
+        <button onClick={() => { setSalonName(''); setSalonModal('new'); }} className="px-3 py-2.5 bg-slate-200 text-slate-700 font-bold rounded-2xl text-sm flex items-center gap-1.5">
+          <Plus size={14} /> Salon
+        </button>
+        <button onClick={() => {
+          const firstSalon = salons.find((s) => s.id > 0);
+          if (!firstSalon) { toast.error('Ã–nce salon ekleyin'); return; }
+          setTableForm({ salon_id: firstSalon.id, code: '' });
+          setTableModal('new');
+        }} className="px-3 py-2.5 bg-blue-600 text-white font-bold rounded-2xl text-sm flex items-center gap-1.5">
+          <Plus size={14} /> Masa
+        </button>
+      </div>
+
+      {salons.map((salon) => (
+        <div key={salon.id} className="bg-white border border-slate-100 rounded-2xl p-4 shadow-sm">
+          <div className="flex items-center justify-between mb-3">
+            <div className="font-black text-slate-800">ğŸ›ï¸ {salon.name} <span className="text-slate-500 font-normal text-sm">({salon.table_count} masa)</span></div>
+            {salon.id > 0 && (
+              <button onClick={() => { setSalonName(salon.name); setSalonModal(salon); }} className="w-8 h-8 bg-slate-100 rounded-xl flex items-center justify-center text-slate-600">
+                <Edit2 size={13} />
+              </button>
+            )}
+          </div>
+          {salon.tables?.length === 0 ? (
+            <div className="text-xs text-slate-400">Bu salonda masa yok</div>
+          ) : (
+            <div className="grid grid-cols-4 gap-2">
+              {salon.tables?.map((t: any) => (
+                <button key={t.id} onClick={() => { setTableForm({ salon_id: t.salon_id || salon.id, code: t.code }); setTableModal(t); }} className={`rounded-xl p-2.5 text-center border-2 ${t.status === 'OPEN' ? 'border-red-200 bg-red-50' : 'border-emerald-200 bg-emerald-50'}`}>
+                  <div className="font-black text-slate-800 text-xs">{t.code}</div>
+                  <div className={`text-xs font-bold mt-0.5 ${t.status === 'OPEN' ? 'text-red-500' : 'text-emerald-500'}`}>{t.status === 'OPEN' ? 'AÃ‡K' : 'BOÅ'}</div>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      ))}
+
+      {salonModal && (
+        <Modal title={salonModal === 'new' ? '+ Yeni Salon' : 'âœï¸ Salon DÃ¼zenle'} onClose={() => setSalonModal(null)} onConfirm={saveSalon} confirmText="Kaydet">
+          <div>
+            <label className="block text-xs font-bold text-slate-500 mb-1.5">Salon AdÄ± *</label>
+            <input value={salonName} onChange={(e) => setSalonName(e.target.value)} placeholder="Ä°Ã§ Salon, BahÃ§e..." className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400" />
+          </div>
+          {salonModal !== 'new' && (
+            <button onClick={delSalon} className="w-full py-3 bg-red-50 text-red-600 font-bold rounded-2xl text-sm">ğŸ—‘ï¸ Salonu Sil</button>
+          )}
+        </Modal>
+      )}
+
+      {tableModal && (
+        <Modal title={tableModal === 'new' ? '+ Yeni Masa' : 'âœï¸ Masa DÃ¼zenle'} onClose={() => setTableModal(null)} onConfirm={saveTable} confirmText="Kaydet">
+          <div>
+            <label className="block text-xs font-bold text-slate-500 mb-1.5">Salon *</label>
+            <select value={tableForm.salon_id} onChange={(e) => setTableForm({ ...tableForm, salon_id: parseInt(e.target.value) })} className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none">
+              {salons.filter((s) => s.id > 0).map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
+            </select>
+          </div>
+          <div>
+            <label className="block text-xs font-bold text-slate-500 mb-1.5">Masa Kodu *</label>
+            <input value={tableForm.code} onChange={(e) => setTableForm({ ...tableForm, code: e.target.value })} placeholder="M1, A-12..." className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400" />
+          </div>
+          {tableModal !== 'new' && (
+            <button onClick={delTable} className="w-full py-3 bg-red-50 text-red-600 font-bold rounded-2xl text-sm">ğŸ—‘ï¸ MasayÄ± Sil</button>
+          )}
+        </Modal>
+      )}
+    </div>
+  );
+}
+
+// ==================== MENUS ====================
+export function Menus() {
+  const [menus, setMenus] = useState<any[]>([]);
+
+  const load = async () => {
+    const d = await api('/mobile/menus');
+    setMenus(d.menus || []);
+  };
+  useEffect(() => { load(); }, []);
+
+  return (
+    <div className="p-4 max-w-2xl mx-auto space-y-3">
+      <div className="bg-blue-50 border border-blue-100 rounded-2xl p-3 text-sm text-blue-700">
+        ğŸ’¡ MenÃ¼ler masaÃ¼stÃ¼ uygulamasÄ±ndan yÃ¶netilir. Buradan mevcut menÃ¼leri gÃ¶rÃ¼ntÃ¼leyebilirsiniz.
+      </div>
+      {menus.length === 0 ? (
+        <div className="text-center text-slate-400 py-16">
+          <div className="text-4xl mb-3">ğŸ½ï¸</div>
+          <div className="font-bold">MenÃ¼ bulunamadÄ±</div>
+        </div>
+      ) : menus.map((m) => (
+        <div key={m.id} className="bg-white border border-slate-100 rounded-2xl p-4 shadow-sm">
+          <div className="flex items-center justify-between mb-2">
+            <div className="font-black text-slate-800">ğŸ½ï¸ {m.name}</div>
+            <span className={`text-xs font-bold px-2 py-0.5 rounded-lg ${m.active ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}`}>
+              {m.active ? 'Aktif' : 'Pasif'}
+            </span>
+          </div>
+          <div className="text-xs text-slate-500">{m.category_name || 'Kategorisiz'}</div>
+          <div className="text-emerald-600 font-black mt-1">{money(m.discounted_price > 0 ? m.discounted_price : m.price)}</div>
+          {m.components?.length > 0 && (
+            <div className="mt-2 bg-slate-50 rounded-xl p-2">
+              {m.components.map((c: any, i: number) => (
+                <div key={i} className="text-xs text-slate-600">ğŸ“¦ {c.name} x{c.quantity}</div>
+              ))}
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+
+==================================================
+DOSYA: src\components\ui\CustomerPicker.tsx
+==================================================
+import { useState, useEffect, useRef } from 'react';
+import { Search, UserPlus, X, ChevronRight } from 'lucide-react';
+import { api } from '../../api/client';
+import toast from 'react-hot-toast';
+
+interface Customer {
+  id: number;
+  name: string;
+  phone: string;
+  address: string;
+}
+
+interface CustomerPickerProps {
+  onSelect: (customer: Customer) => void;
+  onClose: () => void;
+}
+
+export default function CustomerPicker({ onSelect, onClose }: CustomerPickerProps) {
+  const [query, setQuery] = useState('');
+  const [customers, setCustomers] = useState<Customer[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [showNewForm, setShowNewForm] = useState(false);
+  const [newName, setNewName] = useState('');
+  const [newPhone, setNewPhone] = useState('');
+  const [newAddr, setNewAddr] = useState('');
+  const timer = useRef<any>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const search = async (q: string) => {
+    setLoading(true);
+    try {
+      const d = await api('/mobile/customers?q=' + encodeURIComponent(q));
+      setCustomers(d.customers || []);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    search('');
+    setTimeout(() => inputRef.current?.focus(), 100);
+  }, []);
+
+  const handleInput = (v: string) => {
+    setQuery(v);
+    if (timer.current) clearTimeout(timer.current);
+    timer.current = setTimeout(() => search(v), 300);
+  };
+
+  const createCustomer = async () => {
+    if (!newName.trim() || !newPhone.trim()) {
+      toast.error('Ad ve telefon zorunlu');
+      return;
+    }
+    try {
+      const d = await api('/mobile/customers/create', {
+        method: 'POST',
+        body: { name: newName, phone: newPhone, address: newAddr },
+      });
+      if (d.ok) {
+        onSelect({ id: d.customer.id, name: newName, phone: newPhone, address: newAddr });
+      } else {
+        toast.error(d.error || 'Hata');
+      }
+    } catch (e: any) {
+      toast.error(e.message || 'Hata');
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-sm">
+      <div className="w-full sm:max-w-md bg-white rounded-t-3xl sm:rounded-3xl shadow-2xl flex flex-col overflow-hidden" style={{ maxHeight: '90vh' }}>
+        {/* Header */}
+        <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100 flex-shrink-0">
+          <h2 className="font-black text-slate-800">ğŸ›µ Paket Â· MÃ¼ÅŸteri SeÃ§</h2>
+          <button onClick={onClose} className="w-8 h-8 rounded-xl bg-slate-100 flex items-center justify-center">
+            <X size={16} className="text-slate-500" />
+          </button>
+        </div>
+
+        {!showNewForm ? (
+          <>
+            {/* Search */}
+            <div className="px-4 py-3 flex-shrink-0">
+              <div className="relative">
+                <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                <input
+                  ref={inputRef}
+                  type="search"
+                  value={query}
+                  onChange={(e) => handleInput(e.target.value)}
+                  placeholder="Ad veya telefon ara..."
+                  className="w-full bg-slate-50 border border-slate-200 rounded-2xl pl-10 pr-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+                />
+              </div>
+            </div>
+
+            {/* New Customer Button */}
+            <div className="px-4 pb-2 flex-shrink-0">
+              <button
+                onClick={() => setShowNewForm(true)}
+                className="w-full py-3 bg-emerald-600 text-white font-bold rounded-2xl text-sm flex items-center justify-center gap-2 active:scale-95 transition-transform"
+              >
+                <UserPlus size={16} /> Yeni MÃ¼ÅŸteri Ekle
+              </button>
+            </div>
+
+            {/* List */}
+            <div className="flex-1 overflow-y-auto px-4 pb-safe-lg">
+              {loading ? (
+                <div className="space-y-2 py-2">
+                  {[1,2,3].map(i => <div key={i} className="h-16 bg-slate-100 rounded-2xl animate-pulse" />)}
+                </div>
+              ) : customers.length === 0 ? (
+                <div className="text-center py-10 text-slate-400">
+                  <div className="text-4xl mb-2">ğŸ‘¤</div>
+                  <div className="font-bold">MÃ¼ÅŸteri bulunamadÄ±</div>
+                  {query && <div className="text-sm mt-1">"{query}" iÃ§in sonuÃ§ yok</div>}
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {customers.map((c) => (
+                    <button
+                      key={c.id}
+                      onClick={() => onSelect(c)}
+                      className="w-full flex items-center gap-3 p-3 bg-slate-50 hover:bg-blue-50 rounded-2xl transition-colors text-left"
+                    >
+                      <div className="w-11 h-11 rounded-full bg-gradient-to-br from-blue-500 to-blue-400 flex items-center justify-center text-white font-black text-lg flex-shrink-0">
+                        {(c.name || '?').charAt(0).toUpperCase()}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="font-bold text-slate-800 text-sm truncate">{c.name}</div>
+                        <div className="text-xs text-blue-600 font-semibold mt-0.5">ğŸ“ {c.phone || 'Telefon yok'}</div>
+                        {c.address && <div className="text-xs text-slate-500 truncate mt-0.5">ğŸ“ {c.address}</div>}
+                      </div>
+                      <ChevronRight size={16} className="text-slate-300 flex-shrink-0" />
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          </>
+        ) : (
+          <>
+            {/* New Customer Form */}
+            <div className="flex-1 overflow-y-auto p-5 space-y-3">
+              <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-3 text-sm text-emerald-700">
+                MÃ¼ÅŸteri oluÅŸturulduktan sonra paket sipariÅŸe geÃ§ilecek.
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-1.5">Ad Soyad *</label>
+                <input
+                  type="text"
+                  value={newName}
+                  onChange={(e) => setNewName(e.target.value)}
+                  placeholder="MÃ¼ÅŸteri adÄ±"
+                  className="w-full border border-slate-200 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-1.5">Telefon *</label>
+                <input
+                  type="tel"
+                  value={newPhone}
+                  onChange={(e) => setNewPhone(e.target.value)}
+                  placeholder="05xxxxxxxxx"
+                  className="w-full border border-slate-200 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-1.5">Adres</label>
+                <textarea
+                  value={newAddr}
+                  onChange={(e) => setNewAddr(e.target.value)}
+                  placeholder="Mahalle, sokak, bina..."
+                  rows={3}
+                  className="w-full border border-slate-200 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 resize-none"
+                />
+              </div>
+            </div>
+            {/* Footer - âœ… Alt Navigasyon TuÅŸlarÄ± KorumasÄ± (pb-safe-lg) */}
+            <div className="px-5 pt-4 pb-safe-lg border-t border-slate-100 flex gap-3 flex-shrink-0 bg-white">
+              <button onClick={() => setShowNewForm(false)} className="flex-1 py-3 bg-slate-100 text-slate-700 font-bold rounded-2xl text-sm">
+                Geri
+              </button>
+              <button onClick={createCustomer} className="flex-1 py-3 bg-emerald-600 text-white font-bold rounded-2xl text-sm">
+                OluÅŸtur
+              </button>
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
+
+==================================================
+DOSYA: src\components\ui\Modal.tsx
+==================================================
+import { X } from 'lucide-react';
+
+interface ModalProps {
+  title: string;
+  children: React.ReactNode;
+  onClose: () => void;
+  onConfirm?: () => void;
+  confirmText?: string;
+  confirmClass?: string;
+}
+
+export default function Modal({
+  title,
+  children,
+  onClose,
+  onConfirm,
+  confirmText = 'Tamam',
+  confirmClass = 'bg-blue-600'
+}: ModalProps) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/50 backdrop-blur-sm">
+      <div className="w-full sm:max-w-md bg-white rounded-t-3xl sm:rounded-3xl shadow-2xl max-h-[90vh] flex flex-col overflow-hidden">
+        {/* Header */}
+        <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100 flex-shrink-0">
+          <h2 className="font-black text-slate-800 text-base">{title}</h2>
+          <button
+            onClick={onClose}
+            className="w-8 h-8 rounded-xl bg-slate-100 flex items-center justify-center text-slate-500 hover:bg-slate-200 transition-colors"
+          >
+            <X size={16} />
+          </button>
+        </div>
+
+        {/* Body */}
+        <div className={`flex-1 overflow-y-auto p-5 space-y-3 ${!onConfirm ? 'pb-safe-lg' : ''}`}>
+          {children}
+        </div>
+
+        {/* Footer - âœ… Alt Navigasyon TuÅŸlarÄ± KorumasÄ± (pb-safe-lg) */}
+        {onConfirm && (
+          <div className="px-5 pt-4 pb-safe-lg border-t border-slate-100 flex gap-3 flex-shrink-0 bg-white">
+            <button
+              onClick={onClose}
+              className="flex-1 py-3 bg-slate-100 text-slate-700 font-bold rounded-2xl text-sm active:scale-95 transition-transform"
+            >
+              VazgeÃ§
+            </button>
+            <button
+              onClick={onConfirm}
+              className={`flex-1 py-3 text-white font-bold rounded-2xl text-sm active:scale-95 transition-transform ${confirmClass}`}
+            >
+              {confirmText}
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+
+==================================================
+DOSYA: src\components\ui\PaymentPicker.tsx
+==================================================
+import { useEffect, useState } from 'react';
+import { X, CreditCard, Banknote, Building2, QrCode, Gift, Wallet, Utensils } from 'lucide-react';
+import { api } from '../../api/client';
+
+interface Method {
+  id: number;
+  name: string;
+}
+
+interface PaymentPickerProps {
+  onSelect: (method: string) => void;
+  onClose: () => void;
+  title?: string;
+}
+
+export default function PaymentPicker({ onSelect, onClose, title = 'Ã–deme Tipleri' }: PaymentPickerProps) {
+  const [methods, setMethods] = useState<Method[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    api('/mobile/payment-methods')
+      .then((d) => {
+        setMethods(d.methods || []);
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
+  }, []);
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-sm p-0 sm:p-4">
+      <div className="w-full sm:max-w-md bg-white rounded-t-3xl sm:rounded-3xl shadow-2xl max-h-[85vh] flex flex-col overflow-hidden">
+        
+        {/* Header */}
+        <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100 flex-shrink-0 bg-white">
+          <h2 className="font-black text-slate-800 text-base">{title}</h2>
+          <button
+            onClick={onClose}
+            className="w-8 h-8 rounded-xl bg-slate-100 flex items-center justify-center text-slate-500 hover:bg-slate-200 transition-colors"
+          >
+            <X size={16} />
+          </button>
+        </div>
+
+        {/* Content */}
+        <div className="flex-1 overflow-y-auto p-4 pb-safe-lg">
+          {loading ? (
+            <div className="grid grid-cols-2 gap-3">
+              {[1, 2, 3, 4, 5, 6].map((i) => (
+                <div key={i} className="h-20 bg-slate-100 rounded-2xl animate-pulse" />
+              ))}
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 gap-2.5">
+              {methods.map((m) => (
+                <button
+                  key={m.id}
+                  onClick={() => onSelect(m.name)}
+                  className="flex flex-col items-center justify-center gap-2 p-4 bg-slate-50 hover:bg-blue-50 border-2 border-slate-100 hover:border-blue-200 rounded-2xl transition-all active:scale-95 shadow-sm min-h-[90px]"
+                >
+                  <PaymentIcon name={m.name} />
+                  <span className="font-bold text-slate-800 text-xs text-center leading-tight">
+                    {m.name}
+                  </span>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+
+      </div>
+    </div>
+  );
+}
+
+// ÅÄ±k ve Asla Bozulmayan VektÃ¶rel Ä°konlar
+function PaymentIcon({ name }: { name: string }) {
+  const n = name.toLowerCase();
+
+  if (n.includes('nakit')) {
+    return (
+      <div className="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-600 flex items-center justify-center">
+        <Banknote size={22} />
+      </div>
+    );
+  }
+  if (n.includes('kredi') || n.includes('kart') || n.includes('banka')) {
+    return (
+      <div className="w-10 h-10 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center">
+        <CreditCard size={22} />
+      </div>
+    );
+  }
+  if (n.includes('cari')) {
+    return (
+      <div className="w-10 h-10 rounded-xl bg-purple-100 text-purple-600 flex items-center justify-center">
+        <Building2 size={22} />
+      </div>
+    );
+  }
+  if (n.includes('qr')) {
+    return (
+      <div className="w-10 h-10 rounded-xl bg-indigo-100 text-indigo-600 flex items-center justify-center">
+        <QrCode size={22} />
+      </div>
+    );
+  }
+  if (n.includes('hediye')) {
+    return (
+      <div className="w-10 h-10 rounded-xl bg-rose-100 text-rose-600 flex items-center justify-center">
+        <Gift size={22} />
+      </div>
+    );
+  }
+  if (
+    n.includes('ticket') || n.includes('sodexo') || n.includes('multinet') ||
+    n.includes('setcard') || n.includes('metropol') || n.includes('edenred') || n.includes('yemek')
+  ) {
+    return (
+      <div className="w-10 h-10 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center">
+        <Utensils size={20} />
+      </div>
+    );
+  }
+
+  return (
+    <div className="w-10 h-10 rounded-xl bg-slate-200 text-slate-600 flex items-center justify-center">
+      <Wallet size={20} />
+    </div>
+  );
+}
+
+
+==================================================
+DOSYA: src\components\ui\PosOverlay.tsx
+==================================================
+import { useState, useEffect, useCallback } from 'react';
+import { ShoppingCart, Trash2, Tag, ChevronLeft, Plus, Lock } from 'lucide-react';
+import { api, money } from '../../api/client';
+import { useStore, CartItem } from '../../store/useStore';
+import toast from 'react-hot-toast';
+import PaymentPicker from './PaymentPicker';
+
+interface Category { id: number; name: string; }
+interface Product { id: number; name: string; price: number; category_id: number; }
+
+interface PosOverlayProps {
+  onClose: () => void;
+}
+
+export default function PosOverlay({ onClose }: PosOverlayProps) {
+  const { saleMode, table, pkgCust, cart, addToCart, updateCartItem, removeFromCart, clearCart, currentOrderId, isReadOnly } = useStore();
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [activeCat, setActiveCat] = useState<number | null>(null);
+  
+  // Tamamlanan sipariÅŸlerde veya var olan sipariÅŸte doÄŸrudan Adisyon gÃ¶rÃ¼nÃ¼mÃ¼ aÃ§Ä±lÄ±r
+  const [showCart, setShowCart] = useState<boolean>(true);
+  
+  const [editItem, setEditItem] = useState<{ id: string; item: CartItem } | null>(null);
+  const [showPayment, setShowPayment] = useState(false);
+
+  const loadCats = useCallback(async () => {
+    const d = await api('/mobile/categories');
+    const cats = d.categories || [];
+    setCategories(cats);
+    if (cats.length > 0) {
+      setActiveCat(cats[0].id);
+    }
+  }, []);
+
+  const loadProds = useCallback(async (catId: number) => {
+    const d = await api('/mobile/products?category_id=' + catId);
+    setProducts(d.products || []);
+  }, []);
+
+  useEffect(() => {
+    loadCats();
+  }, [loadCats]);
+
+  useEffect(() => {
+    if (activeCat) loadProds(activeCat);
+  }, [activeCat, loadProds]);
+
+  const calcTotal = () => {
+    return Object.values(cart).reduce((sum, it) => {
+      if (it.is_gift) return sum;
+      let tot = it.price * it.qty;
+      if (it.discount_type === 'percent') tot -= tot * (it.discount_value / 100);
+      else if (it.discount_type === 'amount') tot -= it.discount_value;
+      return sum + Math.max(0, tot);
+    }, 0);
+  };
+
+  const cartCount = Object.values(cart).reduce((s, it) => s + it.qty, 0);
+
+  const getTitle = () => {
+    let prefix = '';
+    if (saleMode === 'table' && table) prefix = 'Masa ' + table.code;
+    else if (saleMode === 'self') prefix = 'Al-GÃ¶tÃ¼r';
+    else if (saleMode === 'package' && pkgCust) prefix = 'Paket Â· ' + pkgCust.name;
+    else prefix = 'POS';
+
+    return isReadOnly ? `${prefix} (Ä°nceleme)` : prefix;
+  };
+
+  const buildItems = () =>
+    Object.entries(cart).map(([, it]) => ({
+      product_id: it.id,
+      quantity: it.qty,
+      note: it.note || '',
+      is_gift: !!it.is_gift,
+      discount_type: it.discount_type || '',
+      discount_value: parseFloat(String(it.discount_value)) || 0,
+    }));
+
+  const saveOrder = async (paymentMethodName?: string) => {
+    if (isReadOnly) return;
+
+    const items = buildItems();
+    if (!items.length) { toast.error('Sepet boÅŸ'); return; }
+
+    try {
+      let d: any;
+      if (saleMode === 'table') {
+        d = await api('/mobile/order', {
+          method: 'POST',
+          body: { table_id: table?.id, items, order_id: currentOrderId },
+        });
+      } else if (saleMode === 'self') {
+        d = await api('/mobile/order/self', {
+          method: 'POST',
+          body: { items, order_id: currentOrderId },
+        });
+      } else {
+        d = await api('/mobile/order/package', {
+          method: 'POST',
+          body: { customer_id: pkgCust?.id, items, order_id: currentOrderId, payment_method_name: paymentMethodName },
+        });
+        if (d.ok && paymentMethodName && d.order) {
+          await api('/mobile/order/action', {
+            method: 'POST',
+            body: { order_id: d.order.id, action: 'pay', method: paymentMethodName },
+          });
+        }
+      }
+      if (!d.ok) { toast.error(d.error || 'Hata'); return; }
+      toast.success(currentOrderId ? 'SipariÅŸ gÃ¼ncellendi!' : 'SipariÅŸ kaydedildi!');
+      clearCart();
+      useStore.setState({ currentOrderId: null, isReadOnly: false });
+      onClose();
+    } catch (e: any) {
+      toast.error(e.message || 'Hata');
+    }
+  };
+
+  const handleSave = () => {
+    if (isReadOnly) {
+      clearCart();
+      useStore.setState({ currentOrderId: null, isReadOnly: false });
+      onClose();
+      return;
+    }
+
+    if (saleMode === 'package' && !currentOrderId) {
+      setShowPayment(true);
+    } else {
+      saveOrder();
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 bg-[#f0f4f9] flex flex-col">
+      {/* Header */}
+      <div className="bg-[#0b1a33] text-white flex items-center justify-between px-4 pb-3 pt-safe flex-shrink-0">
+        <button onClick={onClose} className="w-9 h-9 rounded-xl bg-white/10 flex items-center justify-center">
+          <ChevronLeft size={20} className="text-white" />
+        </button>
+        <div className="font-bold text-base flex items-center gap-2">
+          {getTitle()}
+          {isReadOnly && <Lock size={14} className="text-amber-400" />}
+        </div>
+        <button
+          onClick={() => setShowCart(!showCart)}
+          className="relative w-9 h-9 rounded-xl bg-white/10 flex items-center justify-center"
+        >
+          <ShoppingCart size={18} className="text-white" />
+          {cartCount > 0 && (
+            <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full text-xs font-black flex items-center justify-center">
+              {cartCount}
+            </span>
+          )}
+        </button>
+      </div>
+
+      {/* Main Content */}
+      <div className="flex-1 flex overflow-hidden">
+        {/* MenÃ¼ / ÃœrÃ¼nler (EÄŸer Salt Okunur DeÄŸilse) */}
+        {!showCart && !isReadOnly && (
+          <div className="flex-1 flex flex-col overflow-hidden">
+            <div className="bg-white border-b border-slate-100 flex gap-2 px-3 py-2.5 overflow-x-auto flex-shrink-0">
+              {categories.map((c) => (
+                <button
+                  key={c.id}
+                  onClick={() => setActiveCat(c.id)}
+                  className={`px-3 py-1.5 rounded-xl font-bold text-xs whitespace-nowrap transition-all ${
+                    activeCat === c.id
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-slate-100 text-slate-500'
+                  }`}
+                >
+                  {c.name}
+                </button>
+              ))}
+            </div>
+
+            <div
+              className="flex-1 overflow-y-auto p-3 grid grid-cols-3 sm:grid-cols-4 gap-2"
+              style={{ paddingBottom: cartCount > 0 ? 'calc(env(safe-area-inset-bottom, 0px) + 90px)' : 'calc(env(safe-area-inset-bottom, 0px) + 12px)' }}
+            >
+              {products.map((p) => (
+                <button
+                  key={p.id}
+                  onClick={() => addToCart({ id: p.id, name: p.name, price: p.price })}
+                  className="bg-white border border-slate-100 rounded-2xl p-3 text-center shadow-sm active:scale-95 transition-all"
+                >
+                  <div className="font-bold text-slate-800 text-xs leading-tight">{p.name}</div>
+                  <div className="text-emerald-600 font-black text-sm mt-1.5">{money(p.price)}</div>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Adisyon / Sepet GÃ¶rÃ¼nÃ¼mÃ¼ */}
+        {(showCart || isReadOnly) && (
+          <div className="flex-1 flex flex-col overflow-hidden bg-white">
+            <div className="px-4 py-3 border-b border-slate-100 flex items-center justify-between flex-shrink-0">
+              <div className="flex items-center gap-2">
+                <ShoppingCart size={18} className="text-blue-500" />
+                <span className="font-black text-slate-800">Adisyon ÃœrÃ¼nleri</span>
+                <span className="text-xs bg-slate-100 px-2 py-0.5 rounded-lg font-bold text-slate-600">{cartCount} Ã¼rÃ¼n</span>
+              </div>
+              
+              {/* Salt Okunur DeÄŸilse ÃœrÃ¼n Ekle Butonu GÃ¶ster */}
+              {!isReadOnly && (
+                <button
+                  onClick={() => setShowCart(false)}
+                  className="flex items-center gap-1 px-3 py-1.5 bg-blue-50 text-blue-600 rounded-xl font-bold text-xs active:scale-95 transition-transform"
+                >
+                  <Plus size={14} /> Yeni ÃœrÃ¼n Ekle
+                </button>
+              )}
+            </div>
+
+            <div className="flex-1 overflow-y-auto px-4 py-3 space-y-2">
+              {Object.entries(cart).length === 0 ? (
+                <div className="text-center py-16 text-slate-400">
+                  <ShoppingCart size={40} className="mx-auto mb-3 opacity-30" />
+                  <div className="font-bold">Adisyonda Ã¼rÃ¼n bulunamadÄ±</div>
+                </div>
+              ) : (
+                Object.entries(cart).map(([id, it]) => (
+                  <div
+                    key={id}
+                    className="flex items-center gap-3 bg-slate-50 border border-slate-100 rounded-2xl p-3"
+                  >
+                    <div className="flex-1 min-w-0" onClick={() => !isReadOnly && setEditItem({ id, item: it })}>
+                      <div className="font-bold text-slate-800 text-sm truncate">{it.name}</div>
+                      <div className="flex items-center gap-2 mt-1">
+                        {it.is_gift && <span className="text-xs bg-emerald-100 text-emerald-600 px-1.5 py-0.5 rounded-lg font-bold">ğŸ Ä°kram</span>}
+                        {it.discount_value > 0 && <span className="text-xs bg-amber-100 text-amber-600 px-1.5 py-0.5 rounded-lg font-bold">ğŸ·ï¸ Ä°ndirim</span>}
+                        {it.note && <span className="text-xs text-red-500 font-semibold truncate">ğŸ“ {it.note}</span>}
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className="font-black text-emerald-600 text-sm">
+                        {it.is_gift ? '0,00 â‚º' : money(it.price * it.qty)}
+                      </div>
+                      <div className="text-xs text-slate-400">{it.qty}x {money(it.price)}</div>
+                    </div>
+
+                    {/* Salt okunur deÄŸilse dÃ¼zenleme/silme ikonlarÄ± */}
+                    {!isReadOnly && (
+                      <div className="flex flex-col gap-1">
+                        <button
+                          onClick={() => setEditItem({ id, item: it })}
+                          className="w-8 h-8 bg-blue-100 text-blue-600 rounded-xl flex items-center justify-center active:scale-95 transition-transform"
+                        >
+                          <Tag size={13} />
+                        </button>
+                        <button
+                          onClick={() => removeFromCart(id)}
+                          className="w-8 h-8 bg-red-100 text-red-600 rounded-xl flex items-center justify-center active:scale-95 transition-transform"
+                        >
+                          <Trash2 size={13} />
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                ))
+              )}
+            </div>
+
+            {/* Total & Save/Close Bar */}
+            <div className="px-4 pt-4 pb-safe-lg border-t border-slate-100 flex-shrink-0 bg-white">
+              <div className="flex items-center justify-between mb-3">
+                <span className="font-black text-slate-800 text-base">TOPLAM</span>
+                <span className="font-black text-emerald-600 text-xl">{money(calcTotal())}</span>
+              </div>
+              
+              {isReadOnly ? (
+                <button
+                  onClick={handleSave}
+                  className="w-full py-4 bg-slate-800 text-white font-bold rounded-2xl text-base active:scale-95 transition-transform"
+                >
+                  Geriye DÃ¶n
+                </button>
+              ) : (
+                <button
+                  onClick={handleSave}
+                  className="w-full py-4 bg-gradient-to-r from-blue-600 to-blue-500 text-white font-bold rounded-2xl text-base shadow-lg shadow-blue-500/30 active:scale-95 transition-transform"
+                >
+                  {currentOrderId ? 'SipariÅŸi GÃ¼ncelle' : saleMode === 'package' ? 'Kaydet ve Ã–deme Al' : 'SipariÅŸi Kaydet'}
+                </button>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Edit Item Modal */}
+      {editItem && !isReadOnly && (
+        <EditItemModal
+          item={editItem.item}
+          onSave={(updates) => {
+            updateCartItem(editItem.id, updates);
+            setEditItem(null);
+          }}
+          onDelete={() => {
+            removeFromCart(editItem.id);
+            setEditItem(null);
+          }}
+          onClose={() => setEditItem(null)}
+        />
+      )}
+
+      {/* Payment Picker */}
+      {showPayment && (
+        <PaymentPicker
+          title="Kaydet ve Ã–deme Al"
+          onSelect={(method) => {
+            setShowPayment(false);
+            saveOrder(method);
+          }}
+          onClose={() => setShowPayment(false)}
+        />
+      )}
+    </div>
+  );
+}
+
+function EditItemModal({ item, onSave, onDelete, onClose }: {
+  item: CartItem;
+  onSave: (u: Partial<CartItem>) => void;
+  onDelete: () => void;
+  onClose: () => void;
+}) {
+  const [qty, setQty] = useState(item.qty);
+  const [note, setNote] = useState(item.note || '');
+  const [isGift, setIsGift] = useState(item.is_gift);
+  const [discType, setDiscType] = useState(item.discount_type || '');
+  const [discVal, setDiscVal] = useState(item.discount_value || 0);
+
+  return (
+    <div className="fixed inset-0 z-60 flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-sm">
+      <div className="w-full sm:max-w-md bg-white rounded-t-3xl sm:rounded-3xl shadow-2xl">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
+          <h2 className="font-black text-slate-800">âœï¸ {item.name}</h2>
+          <button onClick={onClose} className="w-8 h-8 rounded-xl bg-slate-100 flex items-center justify-center text-slate-500">
+            âœ•
+          </button>
+        </div>
+
+        <div className="p-5 space-y-4">
+          <div>
+            <label className="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">Miktar</label>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => setQty(Math.max(1, qty - 1))}
+                className="w-10 h-10 bg-slate-100 rounded-xl font-black text-slate-700 flex items-center justify-center"
+              >âˆ’</button>
+              <input
+                type="number"
+                value={qty}
+                onChange={(e) => setQty(Math.max(1, parseInt(e.target.value) || 1))}
+                className="w-20 text-center border border-slate-200 rounded-xl py-2 font-bold text-sm"
+              />
+              <button
+                onClick={() => setQty(qty + 1)}
+                className="w-10 h-10 bg-slate-100 rounded-xl font-black text-slate-700 flex items-center justify-center"
+              >+</button>
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-1.5">ÃœrÃ¼n Notu</label>
+            <input
+              type="text"
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              placeholder="Az acÄ±lÄ±, buzsuz..."
+              className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+            />
+          </div>
+
+          <label className="flex items-center gap-3 cursor-pointer">
+            <div className={`w-12 h-6 rounded-full transition-colors ${isGift ? 'bg-emerald-500' : 'bg-slate-200'} relative`}>
+              <div className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${isGift ? 'translate-x-6' : 'translate-x-0.5'}`} />
+            </div>
+            <span className="font-bold text-sm">ğŸ Ä°kram Olarak Ä°ÅŸaretle</span>
+            <input type="checkbox" checked={isGift} onChange={(e) => setIsGift(e.target.checked)} className="hidden" />
+          </label>
+
+          <div>
+            <label className="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-1.5">Ä°ndirim</label>
+            <div className="flex gap-2">
+              <select
+                value={discType}
+                onChange={(e) => setDiscType(e.target.value)}
+                className="flex-1 border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none"
+              >
+                <option value="">Yok</option>
+                <option value="percent">% YÃ¼zde</option>
+                <option value="amount">â‚º Tutar</option>
+              </select>
+              {discType && (
+                <input
+                  type="number"
+                  value={discVal}
+                  onChange={(e) => setDiscVal(parseFloat(e.target.value) || 0)}
+                  className="w-24 border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none"
+                  placeholder="0"
+                />
+              )}
+            </div>
+          </div>
+        </div>
+
+        <div className="px-5 pt-4 pb-safe border-t border-slate-100 flex gap-2">
+          <button
+            onClick={onDelete}
+            className="w-10 h-10 bg-red-50 text-red-600 rounded-xl flex items-center justify-center flex-shrink-0"
+            title="ÃœrÃ¼nÃ¼ Adisyondan Sil"
+          >
+            <Trash2 size={16} />
+          </button>
+          <button onClick={onClose} className="flex-1 py-3 bg-slate-100 text-slate-700 font-bold rounded-2xl text-sm">
+            VazgeÃ§
+          </button>
+          <button
+            onClick={() => onSave({ qty, note, is_gift: isGift, discount_type: discType, discount_value: discVal })}
+            className="flex-1 py-3 bg-blue-600 text-white font-bold rounded-2xl text-sm"
+          >
+            Tamam
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+
+==================================================
+DOSYA: src\store\useStore.ts
+==================================================
+import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
+
+export interface User {
+  id: number;
+  name: string;
+  username: string;
+  role: string;
+}
+
+export interface CartItem {
+  id: number;
+  name: string;
+  price: number;
+  qty: number;
+  note: string;
+  is_gift: boolean;
+  discount_type: string;
+  discount_value: number;
+}
+
+export type SaleMode = 'table' | 'self' | 'package';
+
+interface AppState {
+  // Auth
+  token: string;
+  baseUrl: string;
+  user: User | null;
+
+  // Navigation
+  currentPage: string;
+
+  // POS
+  posTab: string;
+  saleMode: SaleMode;
+  table: { id: number; code: string } | null;
+  pkgCust: { id: number; name: string; phone?: string; address?: string } | null;
+  cart: Record<string, CartItem>;
+  currentOrderId: number | null;
+  ovOpen: boolean;
+
+  // Actions
+  setToken: (token: string) => void;
+  setBaseUrl: (url: string) => void;
+  setUser: (user: User | null) => void;
+  setPage: (page: string) => void;
+  setPosTab: (tab: string) => void;
+  logout: () => void;
+
+  // Cart
+  addToCart: (item: Omit<CartItem, 'qty' | 'note' | 'is_gift' | 'discount_type' | 'discount_value'>) => void;
+  updateCartItem: (id: string, updates: Partial<CartItem>) => void;
+  removeFromCart: (id: string) => void;
+  clearCart: () => void;
+  setCart: (cart: Record<string, CartItem>) => void;
+
+  // POS
+  openTable: (table: { id: number; code: string }) => void;
+  openSelf: () => void;
+  openPackage: (cust: { id: number; name: string; phone?: string; address?: string }) => void;
+  setOvOpen: (open: boolean) => void;
+  setCurrentOrderId: (id: number | null) => void;
+}
+
+export const useStore = create<AppState>()(
+  persist(
+    (set) => ({
+      token: '',
+      baseUrl: '',
+      user: null,
+      currentPage: 'dash',
+      posTab: 'active',
+      saleMode: 'table',
+      table: null,
+      pkgCust: null,
+      cart: {},
+      currentOrderId: null,
+      ovOpen: false,
+
+      setToken: (token) => set({ token }),
+      setBaseUrl: (baseUrl) => set({ baseUrl }),
+      setUser: (user) => set({ user }),
+      setPage: (page) => set({ currentPage: page }),
+      setPosTab: (tab) => set({ posTab: tab }),
+      logout: () => set({ token: '', user: null, currentPage: 'dash', cart: {}, ovOpen: false }),
+
+      addToCart: (item) =>
+        set((state) => {
+          const id = String(item.id);
+          const existing = state.cart[id];
+          if (existing) {
+            return { cart: { ...state.cart, [id]: { ...existing, qty: existing.qty + 1 } } };
+          }
+          return { cart: { ...state.cart, [id]: { ...item, qty: 1, note: '', is_gift: false, discount_type: '', discount_value: 0 } } };
+        }),
+
+      updateCartItem: (id, updates) =>
+        set((state) => ({
+          cart: { ...state.cart, [id]: { ...state.cart[id], ...updates } },
+        })),
+
+      removeFromCart: (id) =>
+        set((state) => {
+          const newCart = { ...state.cart };
+          delete newCart[id];
+          return { cart: newCart };
+        }),
+
+      clearCart: () => set({ cart: {} }),
+      setCart: (cart) => set({ cart }),
+
+      openTable: (table) =>
+        set({ saleMode: 'table', table, pkgCust: null, cart: {}, currentOrderId: null, ovOpen: true }),
+
+      openSelf: () =>
+        set({ saleMode: 'self', table: null, pkgCust: null, cart: {}, currentOrderId: null, ovOpen: true }),
+
+      openPackage: (cust) =>
+        set({ saleMode: 'package', table: null, pkgCust: cust, cart: {}, currentOrderId: null, ovOpen: true }),
+
+      setOvOpen: (open) => set({ ovOpen: open }),
+      setCurrentOrderId: (id) => set({ currentOrderId: id }),
+    }),
+    {
+      name: 'anlikpos-store',
+      partialize: (state) => ({ token: state.token, baseUrl: state.baseUrl, user: state.user }),
+    }
+  )
+);
+
+
+
+==================================================
+DOSYA: src\utils\cn.ts
+==================================================
+import { clsx, type ClassValue } from "clsx";
+import { twMerge } from "tailwind-merge";
+
+export function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs));
+}
+
+
+
+==================================================
+DOSYA: src\utils\orderNotify.ts
+==================================================
+import { LocalNotifications } from '@capacitor/local-notifications';
+
+// Daha Ã¶nce bildirilmiÅŸ sipariÅŸ ID'lerini hafÄ±zada tutar
+const seenOrderIds = new Set<number>();
+
+// 1. Basit ve harici dosya gerektirmeyen Web Audio bip sesi (Uygulama aÃ§Ä±kken Ã§alar)
+function playWebBeep() {
+  try {
+    const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
+    if (!AudioContext) return;
+    const ctx = new AudioContext();
+    
+    // Ã‡ift bip sesi (Ding-Dong / POS tarzÄ±)
+    const now = ctx.currentTime;
+    
+    // 1. Ton (YÃ¼ksek)
+    const osc1 = ctx.createOscillator();
+    const gain1 = ctx.createGain();
+    osc1.type = 'sine';
+    osc1.frequency.setValueAtTime(880, now); // A5
+    gain1.gain.setValueAtTime(0.3, now);
+    gain1.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
+    osc1.connect(gain1);
+    gain1.connect(ctx.destination);
+    osc1.start(now);
+    osc1.stop(now + 0.2);
+
+    // 2. Ton (Daha yÃ¼ksek)
+    const osc2 = ctx.createOscillator();
+    const gain2 = ctx.createGain();
+    osc2.type = 'sine';
+    osc2.frequency.setValueAtTime(1174.66, now + 0.25); // D6
+    gain2.gain.setValueAtTime(0.3, now + 0.25);
+    gain2.gain.exponentialRampToValueAtTime(0.01, now + 0.5);
+    osc2.connect(gain2);
+    gain2.connect(ctx.destination);
+    osc2.start(now + 0.25);
+    osc2.stop(now + 0.5);
+  } catch (e) {
+    console.error('Web audio Ã§alÄ±namadÄ±:', e);
+  }
+}
+
+// 2. Bildirim Sistemi ve YÃ¼ksek Ã–ncelikli Kanal BaÅŸlatÄ±cÄ±
+export async function initOrderNotifications() {
+  try {
+    // Ä°zinleri kontrol et ve iste
+    const perm = await LocalNotifications.checkPermissions();
+    if (perm.display !== 'granted') {
+      await LocalNotifications.requestPermissions();
+    }
+
+    // Android iÃ§in SESLÄ° bildirim kanalÄ± oluÅŸtur
+    // Ã–NEMLÄ°: importance: 5 (MAX) olmalÄ±dÄ±r, aksi halde ses Ã§Ä±kmaz!
+    await LocalNotifications.createChannel({
+      id: 'order_channel_loud_v2', // Kanal ID'si (Yeni ses ayarlarÄ±nÄ± zorlamak iÃ§in v2 yapÄ±ldÄ±)
+      name: 'Yeni SipariÅŸ UyarÄ±larÄ±',
+      description: 'Yeni gelen paket ve online sipariÅŸlerin sesli uyarÄ±larÄ±',
+      importance: 5, // 5 = En YÃ¼ksek (Ses + Banner + TitreÅŸim)
+      visibility: 1,
+      vibration: true,
+      lights: true,
+      lightColor: '#FF0000',
+    });
+  } catch (e) {
+    console.warn('LocalNotifications baÅŸlatÄ±lamadÄ±:', e);
+  }
+}
+
+// Ä°lk aÃ§Ä±lÄ±ÅŸta eski sipariÅŸleri sessizce hafÄ±zaya al
+export function markOrdersSeen(orders: any[]) {
+  orders.forEach((o) => {
+    if (o?.id != null) {
+      seenOrderIds.add(Number(o.id));
+    }
+  });
+}
+
+// 3. Yeni SipariÅŸ GeldiÄŸinde Sesli ve Bildirimli UyarÄ±
+export async function notifyNewOrders(orders: any[]) {
+  const newOrders = orders.filter((o) => o?.id != null && !seenOrderIds.has(Number(o.id)));
+
+  if (newOrders.length === 0) return;
+
+  // Yeni sipariÅŸleri gÃ¶rÃ¼ldÃ¼ olarak iÅŸaretle
+  newOrders.forEach((o) => seenOrderIds.add(Number(o.id)));
+
+  // Uygulama ekranda aÃ§Ä±ksa anlÄ±k bip sesi ver
+  playWebBeep();
+
+  // Sistem bildirimi oluÅŸtur
+  try {
+    for (const order of newOrders) {
+      const source = order.source_name || order.platform || 'Paket Servis';
+      const orderNo = order.order_no ? `#${order.order_no}` : '';
+      const total = order.grand_total ? `${order.grand_total} TL` : '';
+
+      await LocalNotifications.schedule({
+        notifications: [
+          {
+            id: Number(order.id) % 100000,
+            title: `ğŸ”” Yeni SipariÅŸ: ${source} ${orderNo}`,
+            body: `${order.customer_name ? order.customer_name + ' - ' : ''}${total} TutarÄ±nda yeni sipariÅŸ dÃ¼ÅŸtÃ¼!`,
+            channelId: 'order_channel_loud_v2', // YukarÄ±da tanÄ±mladÄ±ÄŸÄ±mÄ±z SESLÄ° kanal
+            schedule: { at: new Date(Date.now() + 100) },
+            sound: undefined, // undefined olduÄŸunda cihazÄ±n varsayÄ±lan bildirim sesini Ã§alar
+            smallIcon: 'ic_launcher',
+            actionTypeId: '',
+            extra: { orderId: order.id }
+          }
+        ]
+      });
+    }
+  } catch (err) {
+    console.error('Bildirim gÃ¶nderilemedi:', err);
+  }
+}
+
+

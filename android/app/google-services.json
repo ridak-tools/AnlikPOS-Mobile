@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "559782098525",
+    "project_id": "anlikpos",
+    "storage_bucket": "anlikpos.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:559782098525:android:8be375076fda077dd3ffb4",
+        "android_client_info": {
+          "package_name": "com.anlikpos.mobile"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBxkVedlXXOyLb6GiKqmf7gEIieBw9CAcY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
