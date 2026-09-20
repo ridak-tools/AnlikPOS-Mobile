@@ -10,13 +10,14 @@ workflows:
       - name: 1. Install Node Dependencies
         script: |
           npm install --legacy-peer-deps
+          npm install -D @capacitor/assets --legacy-peer-deps
       - name: 2. Build Web App
         script: |
           npm run build
-      - name: 3. Add iOS & Generate App Icons
+      - name: 3. Add iOS & Generate Official App Icons from app_icon.png
         script: |
-          npx @capacitor/assets generate --ios || true
           npx cap add ios || true
+          npx @capacitor/assets generate --ios || true
           npx cap sync ios
       - name: 4. Install CocoaPods
         script: |
