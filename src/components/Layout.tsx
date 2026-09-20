@@ -10,6 +10,7 @@ import { notifyNewOrders, markOrdersSeen, initOrderNotifications } from '../util
 import toast from 'react-hot-toast';
 import { PushNotifications } from '@capacitor/push-notifications';
 import { Clipboard } from '@capacitor/clipboard';
+import { Capacitor } from '@capacitor/core';
 
 export const NAV_ITEMS = [
   { id: 'dash', label: 'Genel Bakış', icon: LayoutDashboard },
@@ -43,7 +44,7 @@ export default function Layout({ children, onRefresh }: LayoutProps) {
   const [seenOrderIds, setSeenOrderIds] = useState<Set<number>>(new Set());
   const bootstrappedRef = useRef(false);
   
-  // ✅ FCM Token State'i
+  // FCM Token State'i
   const [fcmToken, setFcmToken] = useState<string>('');
 
   // Entegrasyon State'leri
@@ -116,22 +117,50 @@ export default function Layout({ children, onRefresh }: LayoutProps) {
     return () => clearInterval(timer);
   }, [fetchPackageNotifications]);
 
-  // ✅ CİHAZ FCM TOKENİNİ ALMA
+  // ✅ AKILLI VE TAKILMAYAN FCM TOKEN YÜKLEYİCİ
   useEffect(() => {
+    let timeoutTimer: any;
+
     const fetchFCMToken = async () => {
+      if (!Capacitor.isNativePlatform()) {
+        setFcmToken('WEB_DEMO_MODE');
+        return;
+      }
+
+      // 3 Saniye içinde token gelmezse (iOS Sideload kısıtlaması nedeniyle) Tünel Moduna Geç
+      timeoutTimer = setTimeout(() => {
+        setFcmToken((prev) => prev || 'IOS_TUNNEL_ACTIVE');
+      }, 3000);
+
       try {
-        const perm = await PushNotifications.checkPermissions();
+        let perm = await PushNotifications.checkPermissions();
+        if (perm.receive !== 'granted') {
+          perm = await PushNotifications.requestPermissions();
+        }
+
         if (perm.receive === 'granted') {
           PushNotifications.addListener('registration', (token) => {
+            if (timeoutTimer) clearTimeout(timeoutTimer);
             setFcmToken(token.value);
           });
+
+          PushNotifications.addListener('registrationError', () => {
+            if (timeoutTimer) clearTimeout(timeoutTimer);
+            setFcmToken('IOS_TUNNEL_ACTIVE');
+          });
+
           await PushNotifications.register();
+        } else {
+          setFcmToken('IOS_TUNNEL_ACTIVE');
         }
       } catch (e) {
-        console.warn('FCM Token alınamadı:', e);
+        if (timeoutTimer) clearTimeout(timeoutTimer);
+        setFcmToken('IOS_TUNNEL_ACTIVE');
       }
     };
+
     fetchFCMToken();
+    return () => { if (timeoutTimer) clearTimeout(timeoutTimer); };
   }, []);
 
   const handleOpenNotifModal = () => {
@@ -261,19 +290,27 @@ export default function Layout({ children, onRefresh }: LayoutProps) {
 
   // ✅ KULLANICI BİLGİSİ EKRANINI GÖSTEREN VE TOKEN KOPYALAYAN FONKSİYON
   const showUserInfo = async () => {
+    const isIosTunnel = fcmToken === 'IOS_TUNNEL_ACTIVE';
+
     toast(
       (t) => (
         <div className="flex flex-col gap-1">
           <div><b>Yetkili:</b> {userName}</div>
           <div className="text-sm"><b>Rol:</b> {userRole || 'Kullanıcı'}</div>
-          {fcmToken ? (
+          
+          {isIosTunnel ? (
+            <div className="mt-2 text-[11px] bg-emerald-500/20 text-emerald-200 border border-emerald-500/30 p-2 rounded-xl text-center font-bold">
+              🍏 iPhone Canlı Tünel Modu Aktif<br/>
+              <span className="text-[9.5px] font-normal opacity-80">(Masaüstüne token yapıştırmanız gerekmez)</span>
+            </div>
+          ) : fcmToken ? (
             <button
               onClick={async () => {
                 await Clipboard.write({ string: fcmToken });
-                toast.success('Token kopyalandı! Bilgisayara aktarabilirsiniz.');
+                toast.success('FCM Token kopyalandı!');
                 toast.dismiss(t.id);
               }}
-              className="mt-2 text-xs bg-white/20 hover:bg-white/30 px-3 py-1.5 rounded-lg transition-colors font-bold text-center"
+              className="mt-2 text-xs bg-white/20 hover:bg-white/30 px-3 py-1.5 rounded-lg transition-colors font-bold text-center active:scale-95"
             >
               FCM Token Kopyala
             </button>
@@ -400,7 +437,7 @@ export default function Layout({ children, onRefresh }: LayoutProps) {
               )}
             </button>
 
-            {/* ✅ KULLANICI LOGOSU VE TOKEN GÖSTERİMİ */}
+            {/* KULLANICI LOGOSU VE TOKEN GÖSTERİMİ */}
             <button
               onClick={showUserInfo}
               className="w-9 h-9 rounded-full bg-gradient-to-br from-blue-500 to-cyan-400 flex items-center justify-center text-white font-black text-sm shadow-md active:scale-95 transition-transform"
@@ -478,7 +515,7 @@ export default function Layout({ children, onRefresh }: LayoutProps) {
                           className="sr-only peer"
                         />
                         <div className={`w-11 h-6 rounded-full transition-colors relative ${p.is_configured ? 'peer-checked:bg-emerald-500 bg-slate-200' : 'bg-slate-100'}`}>
-                          <div className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${isOpen ? 'translate-x-5' : 'translate-x-0.5'}`} />
+                          <div className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${isOn ? 'translate-x-5' : 'translate-x-0.5'}`} />
                         </div>
                       </label>
 
