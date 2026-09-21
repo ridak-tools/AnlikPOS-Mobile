@@ -1,52 +1,20 @@
-import { PushNotifications, Token, ActionPerformed } from '@capacitor/push-notifications';
-import { api } from '../api/client';
-import { useStore } from '../store/useStore';
+import { PushNotifications } from '@capacitor/push-notifications';
+import { Capacitor } from '@capacitor/core';
 
-export async function initPushNotifications() {
+export async function initPushNotifications(): Promise<void> {
+  // ✅ Sadece Android'de çalıştır (iOS Sideloading çökmesini engeller)
+  if (!Capacitor.isNativePlatform() || Capacitor.getPlatform() !== 'android') {
+    return;
+  }
+
   try {
-    let permStatus = await PushNotifications.checkPermissions();
-
-    if (permStatus.receive === 'prompt') {
-      permStatus = await PushNotifications.requestPermissions();
+    const perm = await PushNotifications.checkPermissions();
+    if (perm.receive !== 'granted') {
+      await PushNotifications.requestPermissions();
     }
-
-    if (permStatus.receive !== 'granted') {
-      console.warn('Push bildirim izni verilmedi');
-      return;
-    }
-
-    // Android Sesli Bildirim Kanalı
-    await PushNotifications.createChannel({
-      id: 'order_channel_loud_v2',
-      name: 'Yeni Sipariş Uyarıları',
-      description: 'Yeni sipariş geldiğinde yüksek sesle uyarır',
-      importance: 5,
-      visibility: 1,
-      vibration: true,
-      sound: 'default'
-    });
-
     await PushNotifications.register();
-
-    // Firebase'den Token Alındığında Sunucuya Kaydet
-    await PushNotifications.addListener('registration', async (token: Token) => {
-      try {
-        await api('/mobile/save-fcm-token', {
-          method: 'POST',
-          body: { token: token.value, platform: 'android' }
-        });
-      } catch (e) {
-        // Sunucu 404 verse bile uygulama çökmeyecek
-      }
-    });
-
-    // Bildirime Tıklanınca Sipariş Sayfasına Git
-    await PushNotifications.addListener('pushNotificationActionPerformed', (action: ActionPerformed) => {
-      useStore.getState().setPage('pos');
-      useStore.getState().setPosTab('package');
-    });
-
+    await PushNotifications.removeAllListeners();
   } catch (e) {
-    console.error('Push bildirim başlatma hatası:', e);
+    console.warn('PushNotification init hatası', e);
   }
 }

@@ -8,8 +8,6 @@ import { useStore } from '../store/useStore';
 import { api, money, getBaseUrl } from '../api/client';
 import { notifyNewOrders, markOrdersSeen, initOrderNotifications } from '../utils/orderNotify';
 import toast from 'react-hot-toast';
-import { PushNotifications } from '@capacitor/push-notifications';
-import { Clipboard } from '@capacitor/clipboard';
 import { Capacitor } from '@capacitor/core';
 
 export const NAV_ITEMS = [
@@ -44,8 +42,7 @@ export default function Layout({ children, onRefresh }: LayoutProps) {
   const [seenOrderIds, setSeenOrderIds] = useState<Set<number>>(new Set());
   const bootstrappedRef = useRef(false);
   
-  // FCM Token State'i
-  const [fcmToken, setFcmToken] = useState<string>('');
+  const [fcmToken, setFcmToken] = useState<string>('IOS_TUNNEL_ACTIVE');
 
   // Entegrasyon State'leri
   const [showIntegModal, setShowIntegModal] = useState(false);
@@ -57,7 +54,7 @@ export default function Layout({ children, onRefresh }: LayoutProps) {
   const roleUpper = (user?.role || '').toString().toUpperCase();
   const isAdmin = roleUpper === 'ADMIN' || roleUpper === 'YÖNETİCİ' || roleUpper === 'YONETICI';
 
-  const visibleNavItems = NAV_ITEMS.find((item) =>
+  const visibleNavItems = NAV_ITEMS.filter((item) =>
     isAdmin ? true : PERSONEL_ALLOWED_PAGES.includes(item.id)
   );
 
@@ -70,7 +67,7 @@ export default function Layout({ children, onRefresh }: LayoutProps) {
     }
   }, [user, isAdmin, currentPage, setPage]);
 
-  // --- PAKET & ENTEGRASYON SİPARİŞ BİLDİRİM MANTIĞI ---
+  // PAKET SİPARİŞ BİLDİRİMİ
   const fetchPackageNotifications = useCallback(async () => {
     try {
       const [pkg, active] = await Promise.all([
@@ -104,7 +101,6 @@ export default function Layout({ children, onRefresh }: LayoutProps) {
         markOrdersSeen(list);
         bootstrappedRef.current = true;
       } else {
-        // 🔥 BİLDİRİMİ VE SESİ TETİKLE
         await notifyNewOrders(list);
       }
     } catch {}
@@ -118,50 +114,6 @@ export default function Layout({ children, onRefresh }: LayoutProps) {
     return () => clearInterval(timer);
   }, [fetchPackageNotifications]);
 
-  useEffect(() => {
-    let timeoutTimer: any;
-
-    const fetchFCMToken = async () => {
-      if (!Capacitor.isNativePlatform()) {
-        setFcmToken('WEB_DEMO_MODE');
-        return;
-      }
-
-      timeoutTimer = setTimeout(() => {
-        setFcmToken((prev) => prev || 'IOS_TUNNEL_ACTIVE');
-      }, 3000);
-
-      try {
-        let perm = await PushNotifications.checkPermissions();
-        if (perm.receive !== 'granted') {
-          perm = await PushNotifications.requestPermissions();
-        }
-
-        if (perm.receive === 'granted') {
-          PushNotifications.addListener('registration', (token) => {
-            if (timeoutTimer) clearTimeout(timeoutTimer);
-            setFcmToken(token.value);
-          });
-
-          PushNotifications.addListener('registrationError', () => {
-            if (timeoutTimer) clearTimeout(timeoutTimer);
-            setFcmToken('IOS_TUNNEL_ACTIVE');
-          });
-
-          await PushNotifications.register();
-        } else {
-          setFcmToken('IOS_TUNNEL_ACTIVE');
-        }
-      } catch (e) {
-        if (timeoutTimer) clearTimeout(timeoutTimer);
-        setFcmToken('IOS_TUNNEL_ACTIVE');
-      }
-    };
-
-    fetchFCMToken();
-    return () => { if (timeoutTimer) clearTimeout(timeoutTimer); };
-  }, []);
-
   const handleOpenNotifModal = () => {
     setShowNotifModal(true);
     setSeenOrderIds((prev) => {
@@ -171,7 +123,7 @@ export default function Layout({ children, onRefresh }: LayoutProps) {
     });
   };
 
-  // --- ENTEGRASYON KISA YOL MANTIĞI ---
+  // ENTEGRASYON KISA YOLU
   const loadIntegrations = async () => {
     try {
       const d = await api('/mobile/integrations');
@@ -288,33 +240,15 @@ export default function Layout({ children, onRefresh }: LayoutProps) {
   };
 
   const showUserInfo = async () => {
-    const isIosTunnel = fcmToken === 'IOS_TUNNEL_ACTIVE';
-
     toast(
       (t) => (
         <div className="flex flex-col gap-1">
           <div><b>Yetkili:</b> {userName}</div>
           <div className="text-sm"><b>Rol:</b> {userRole || 'Kullanıcı'}</div>
-          
-          {isIosTunnel ? (
-            <div className="mt-2 text-[11px] bg-emerald-500/20 text-emerald-200 border border-emerald-500/30 p-2 rounded-xl text-center font-bold">
-              🍏 iPhone Canlı Tünel Modu Aktif<br/>
-              <span className="text-[9.5px] font-normal opacity-80">(Masaüstüne token yapıştırmanız gerekmez)</span>
-            </div>
-          ) : fcmToken ? (
-            <button
-              onClick={async () => {
-                await Clipboard.write({ string: fcmToken });
-                toast.success('FCM Token kopyalandı!');
-                toast.dismiss(t.id);
-              }}
-              className="mt-2 text-xs bg-white/20 hover:bg-white/30 px-3 py-1.5 rounded-lg transition-colors font-bold text-center active:scale-95"
-            >
-              FCM Token Kopyala
-            </button>
-          ) : (
-            <div className="mt-2 text-[10px] text-white/50 text-center">FCM Token Yükleniyor...</div>
-          )}
+          <div className="mt-2 text-[11px] bg-emerald-500/20 text-emerald-200 border border-emerald-500/30 p-2 rounded-xl text-center font-bold">
+            🍏 Canlı Tünel Modu Aktif<br/>
+            <span className="text-[9.5px] font-normal opacity-80">(Masaüstüne token yapıştırmanız gerekmez)</span>
+          </div>
         </div>
       ),
       {
