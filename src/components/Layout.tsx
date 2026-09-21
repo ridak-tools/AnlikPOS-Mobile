@@ -57,7 +57,7 @@ export default function Layout({ children, onRefresh }: LayoutProps) {
   const roleUpper = (user?.role || '').toString().toUpperCase();
   const isAdmin = roleUpper === 'ADMIN' || roleUpper === 'YÖNETİCİ' || roleUpper === 'YONETICI';
 
-  const visibleNavItems = NAV_ITEMS.filter((item) =>
+  const visibleNavItems = NAV_ITEMS.find((item) =>
     isAdmin ? true : PERSONEL_ALLOWED_PAGES.includes(item.id)
   );
 
@@ -104,6 +104,7 @@ export default function Layout({ children, onRefresh }: LayoutProps) {
         markOrdersSeen(list);
         bootstrappedRef.current = true;
       } else {
+        // 🔥 BİLDİRİMİ VE SESİ TETİKLE
         await notifyNewOrders(list);
       }
     } catch {}
@@ -117,7 +118,6 @@ export default function Layout({ children, onRefresh }: LayoutProps) {
     return () => clearInterval(timer);
   }, [fetchPackageNotifications]);
 
-  // ✅ AKILLI VE TAKILMAYAN FCM TOKEN YÜKLEYİCİ
   useEffect(() => {
     let timeoutTimer: any;
 
@@ -127,7 +127,6 @@ export default function Layout({ children, onRefresh }: LayoutProps) {
         return;
       }
 
-      // 3 Saniye içinde token gelmezse (iOS Sideload kısıtlaması nedeniyle) Tünel Moduna Geç
       timeoutTimer = setTimeout(() => {
         setFcmToken((prev) => prev || 'IOS_TUNNEL_ACTIVE');
       }, 3000);
@@ -288,7 +287,6 @@ export default function Layout({ children, onRefresh }: LayoutProps) {
     setSidebarOpen(false);
   };
 
-  // ✅ KULLANICI BİLGİSİ EKRANINI GÖSTEREN VE TOKEN KOPYALAYAN FONKSİYON
   const showUserInfo = async () => {
     const isIosTunnel = fcmToken === 'IOS_TUNNEL_ACTIVE';
 
@@ -437,7 +435,6 @@ export default function Layout({ children, onRefresh }: LayoutProps) {
               )}
             </button>
 
-            {/* KULLANICI LOGOSU VE TOKEN GÖSTERİMİ */}
             <button
               onClick={showUserInfo}
               className="w-9 h-9 rounded-full bg-gradient-to-br from-blue-500 to-cyan-400 flex items-center justify-center text-white font-black text-sm shadow-md active:scale-95 transition-transform"
