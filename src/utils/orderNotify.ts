@@ -23,7 +23,6 @@ function saveSeen(ids: Set<number>) {
 let seen = loadSeen();
 let ready = false;
 
-// iOS Güvenli WebAudio Ses Motoru
 function playiOSAlarmSound() {
   try {
     const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
@@ -66,6 +65,13 @@ export function markOrderIdNotified(orderId: number): void {
 }
 
 export async function initOrderNotifications(): Promise<void> {
+  // PWA Tarayıcı Bildirim İzni İsteme (iOS PWA)
+  if ("Notification" in window && Notification.permission !== "granted" && Notification.permission !== "denied") {
+    try {
+      await Notification.requestPermission();
+    } catch {}
+  }
+
   if (!Capacitor.isNativePlatform()) {
     ready = true;
     return;
@@ -73,7 +79,6 @@ export async function initOrderNotifications(): Promise<void> {
   try {
     const perm = await LocalNotifications.requestPermissions();
     if (perm.display === 'granted') {
-      // ✅ Sadece Android ise Bildirim Kanalı oluştur (iOS'ta çökmesini engeller)
       if (Capacitor.getPlatform() === 'android') {
         await LocalNotifications.createChannel({
           id: 'orders',
@@ -126,6 +131,26 @@ export async function notifyNewOrders(orders: any[]): Promise<void> {
 
     playiOSAlarmSound();
 
+    // 1. PWA / Service Worker Kilitli Ekran Bildirimi (iOS 16.4+)
+    if ("serviceWorker" in navigator && "Notification" in window && Notification.permission === "granted") {
+      try {
+        const reg = await navigator.serviceWorker.ready;
+        if (reg && reg.showNotification) {
+          reg.showNotification(title, {
+            body: body || 'Sipariş detayları için tıklayın.',
+            icon: '/payment-icons/logo.png',
+            badge: '/payment-icons/logo.png',
+            vibrate: [200, 100, 200, 100, 200],
+            data: { orderId: o.id },
+            tag: 'order-' + o.id,
+          });
+        }
+      } catch (e) {
+        console.warn('PWA Bildirim Hatası:', e);
+      }
+    }
+
+    // 2. Native Capacitor Bildirimi
     if (Capacitor.isNativePlatform() && ready) {
       try {
         const id = (Number(o.id) % 100000) + Math.floor(Math.random() * 1000);
@@ -147,6 +172,7 @@ export async function notifyNewOrders(orders: any[]): Promise<void> {
       }
     }
 
+    // 3. Ekran İçi Toast
     try {
       const { default: toast } = await import('react-hot-toast');
       toast(title + (body ? `\n${body}` : ''), {

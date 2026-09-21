@@ -1,0 +1,21 @@
+{
+  "name": "AnlıkPOS Mobil",
+  "short_name": "AnlıkPOS",
+  "description": "AnlıkPOS Mobil Yönetim Paneli",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0b1a33",
+  "theme_color": "#0b1a33",
+  "icons": [
+    {
+      "src": "/payment-icons/logo.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/payment-icons/logo.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
